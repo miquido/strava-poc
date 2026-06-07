@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.miquido.stravapoc.library.data.usecase.GetRoutesUseCaseTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-06-07T08:04:25.061Z" hostname="Jakubs-MacBook-Pro-2.local" time="0.034">
+  <properties/>
+  <testcase name="each activity type has exactly 3 routes" classname="com.miquido.stravapoc.library.data.usecase.GetRoutesUseCaseTest" time="0.032"/>
+  <testcase name="null type returns all routes" classname="com.miquido.stravapoc.library.data.usecase.GetRoutesUseCaseTest" time="0.001"/>
+  <testcase name="returns only CYCLING routes when type is CYCLING" classname="com.miquido.stravapoc.library.data.usecase.GetRoutesUseCaseTest" time="0.0"/>
+  <testcase name="returns only WALKING routes when type is WALKING" classname="com.miquido.stravapoc.library.data.usecase.GetRoutesUseCaseTest" time="0.001"/>
+  <testcase name="returns only RUNNING routes when type is RUNNING" classname="com.miquido.stravapoc.library.data.usecase.GetRoutesUseCaseTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

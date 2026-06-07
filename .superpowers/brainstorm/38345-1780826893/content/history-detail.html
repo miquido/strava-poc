@@ -1,0 +1,77 @@
+<h2>Szczegóły odbytego treningu</h2>
+<p class="subtitle">Ekran po tapnięciu na aktywność z historii</p>
+
+<div class="mockup" style="max-width:380px; margin:0 auto;">
+  <div class="mockup-header">HistoryDetailScreen — podgląd</div>
+  <div class="mockup-body" style="padding:0; overflow:hidden; border-radius:0 0 8px 8px;">
+
+    <div style="background:#000; font-family:sans-serif;">
+
+      <!-- TopAppBar -->
+      <div style="display:flex; align-items:center; gap:10px; padding:14px 16px 10px; background:#121212;">
+        <div style="color:#E8161B; font-size:18px;">←</div>
+        <div style="color:white; font-size:15px; font-weight:600;">Warszawa — Łazienki</div>
+      </div>
+
+      <!-- Date + type badge -->
+      <div style="padding:8px 16px 0; display:flex; align-items:center; gap:8px;">
+        <div style="color:#888; font-size:12px;">07.06.2026, 07:42</div>
+        <div style="background:#E8161B22; color:#E8161B; font-size:11px; font-weight:600; padding:2px 8px; border-radius:20px;">🏃 Bieganie</div>
+      </div>
+
+      <!-- Map area -->
+      <div style="margin:12px 16px; height:200px; background:#1a1a1a; border-radius:12px; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
+        <!-- Fake polyline -->
+        <svg width="100%" height="100%" style="position:absolute;top:0;left:0;">
+          <polyline points="60,160 80,140 100,115 125,95 150,80 175,70 195,68 210,75 220,88 215,105 200,118 180,128 155,135 130,140 105,148 80,155 60,160"
+            fill="none" stroke="#E8161B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          <!-- start dot -->
+          <circle cx="60" cy="160" r="5" fill="#4CAF50"/>
+          <!-- end dot -->
+          <circle cx="60" cy="160" r="3" fill="#4CAF50"/>
+        </svg>
+        <div style="color:#555; font-size:12px; z-index:1;">Google Maps + Polyline</div>
+      </div>
+
+      <!-- Stats grid -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:0 16px 12px;">
+
+        <div style="background:#1a1a1a; border-radius:10px; padding:14px 16px;">
+          <div style="color:#888; font-size:10px; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:4px;">Dystans</div>
+          <div style="color:white; font-size:24px; font-weight:700; line-height:1;">5.2</div>
+          <div style="color:#666; font-size:11px;">km</div>
+        </div>
+
+        <div style="background:#1a1a1a; border-radius:10px; padding:14px 16px;">
+          <div style="color:#888; font-size:10px; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:4px;">Czas</div>
+          <div style="color:white; font-size:24px; font-weight:700; line-height:1;">28:14</div>
+          <div style="color:#666; font-size:11px;">mm:ss</div>
+        </div>
+
+        <div style="background:#1a1a1a; border-radius:10px; padding:14px 16px;">
+          <div style="color:#888; font-size:10px; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:4px;">Tempo</div>
+          <div style="color:white; font-size:24px; font-weight:700; line-height:1;">5:26</div>
+          <div style="color:#666; font-size:11px;">min/km</div>
+        </div>
+
+        <div style="background:#1a1a1a; border-radius:10px; padding:14px 16px;">
+          <div style="color:#888; font-size:10px; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:4px;">Okrążenia</div>
+          <div style="color:white; font-size:24px; font-weight:700; line-height:1;">3</div>
+          <div style="color:#666; font-size:11px;">lap</div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div style="margin-top:20px; background:#111; border-radius:10px; padding:14px 16px;">
+  <div style="color:#888; font-size:11px; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Co zawiera ekran</div>
+  <ul style="color:#ccc; font-size:13px; margin:0; padding-left:18px; line-height:1.8;">
+    <li>TopAppBar z nazwą trasy + strzałka wstecz</li>
+    <li>Data/godzina i typ aktywności (badge)</li>
+    <li>Mapa z polyline przebiegu trasy (Google Maps)</li>
+    <li>4 kafelki: dystans / czas / tempo / okrążenia</li>
+  </ul>
+</div>

@@ -1,0 +1,55 @@
+<h2>Gdzie żyje TabRow?</h2>
+<p class="subtitle">Trzy możliwe struktury nawigacji — wybierz, która najlepiej pasuje do Twojej wizji</p>
+
+<div class="options">
+
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>TabRow jako ekran główny (Polecane)</h3>
+      <p>Ekran startowy ma dwa taby. Tab 1 = wybór aktywności → lista tras → szczegóły. Tab 2 = historia. Wchodząc głębiej (np. lista tras) TabRow znika — jesteś w pełnoekranowej nawigacji.</p>
+      <div style="margin-top:12px; background:#1a1a1a; border-radius:8px; padding:12px; font-size:13px; color:#ccc;">
+        <div style="background:#E8161B; color:white; border-radius:4px; padding:4px 8px; display:inline-block; margin-bottom:8px; font-size:11px;">Ekran główny</div><br>
+        <div style="display:flex; gap:8px; margin-bottom:8px;">
+          <div style="flex:1; text-align:center; border-bottom:2px solid #E8161B; padding-bottom:4px; color:white; font-size:12px;">🏃 Trasy</div>
+          <div style="flex:1; text-align:center; border-bottom:2px solid #333; padding-bottom:4px; color:#888; font-size:12px;">📋 Historia</div>
+        </div>
+        <div style="text-align:center; color:#aaa; font-size:12px;">[ Bieganie ] [ Rower ] [ Chodzenie ]</div>
+        <div style="text-align:center; color:#555; font-size:11px; margin-top:6px;">↓ tap → RouteList (bez tabrow)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>TabRow zawsze widoczny</h3>
+      <p>TabRow zostaje na każdym ekranie — lista tras i szczegóły trasy też mają taby u góry. Możesz przełączać się między zakładkami w dowolnym momencie.</p>
+      <div style="margin-top:12px; background:#1a1a1a; border-radius:8px; padding:12px; font-size:13px; color:#ccc;">
+        <div style="display:flex; gap:8px; margin-bottom:8px;">
+          <div style="flex:1; text-align:center; border-bottom:2px solid #E8161B; padding-bottom:4px; color:white; font-size:12px;">🏃 Trasy</div>
+          <div style="flex:1; text-align:center; border-bottom:2px solid #333; padding-bottom:4px; color:#888; font-size:12px;">📋 Historia</div>
+        </div>
+        <div style="color:#aaa; font-size:12px;">Warszawa — Łazienki &nbsp;5.2 km</div>
+        <div style="color:#aaa; font-size:12px;">Kraków — Planty &nbsp;&nbsp;&nbsp;&nbsp;4.0 km</div>
+        <div style="color:#555; font-size:11px; margin-top:6px;">(zawsze możesz swipenąć na historię)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Bottom NavigationBar zamiast TabRow</h3>
+      <p>Dolny pasek nawigacji (Material 3 NavigationBar) zamiast górnego TabRow. Bardziej typowe dla aplikacji mobilnych z kilkoma głównymi sekcjami. TabRow zostaje na górze tylko w obrębie zakładki Historii (jeśli potrzeba filtrów).</p>
+      <div style="margin-top:12px; background:#1a1a1a; border-radius:8px; padding:12px; font-size:13px; color:#ccc;">
+        <div style="color:#aaa; font-size:12px; margin-bottom:8px;">[ Ekran główny — lista tras ]</div>
+        <div style="display:flex; justify-content:space-around; background:#111; border-radius:4px; padding:8px; border-top:1px solid #333;">
+          <div style="text-align:center; color:#E8161B; font-size:11px;">🏃<br>Trasy</div>
+          <div style="text-align:center; color:#666; font-size:11px;">📋<br>Historia</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

@@ -1,0 +1,44 @@
+<resources>
+    <string name="app_name">StravaPoc</string>
+
+    <!-- Navigation -->
+    <string name="tab_routes">Routes</string>
+    <string name="tab_history">History</string>
+    <string name="cd_back">Back</string>
+
+    <!-- Activity types -->
+    <string name="activity_running">Running</string>
+    <string name="activity_cycling">Cycling</string>
+    <string name="activity_walking">Walking</string>
+
+    <!-- Route list screen -->
+    <string name="route_list_title_running">Running routes</string>
+    <string name="route_list_title_cycling">Cycling routes</string>
+    <string name="route_list_title_walking">Walking routes</string>
+    <string name="route_points">%d points</string>
+    <string name="error_message">Error: %s</string>
+
+    <!-- Route detail screen -->
+    <string name="route_detail_fallback_title">Route details</string>
+    <string name="route_distance_info">Distance: %1$.1f km · %2$d pts</string>
+    <string name="send_to_watch">Send to watch</string>
+    <string name="route_sent_success">Route sent to watch!</string>
+    <string name="route_sent_error">Error: %s</string>
+
+    <!-- History screen -->
+    <string name="history_empty">No activities</string>
+    <string name="metric_time">time</string>
+    <string name="metric_pace_unit">/km</string>
+    <string name="metric_laps">laps</string>
+
+    <!-- History detail screen -->
+    <string name="history_detail_fallback_title">Activity details</string>
+    <string name="metric_distance">Distance</string>
+    <string name="metric_duration">Time</string>
+    <string name="metric_pace">Pace</string>
+    <string name="metric_laps_label">Laps</string>
+    <string name="unit_km">km</string>
+    <string name="unit_mmss">hh:mm:ss</string>
+    <string name="unit_min_km">min/km</string>
+    <string name="unit_laps">laps</string>
+</resources>
