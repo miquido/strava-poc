@@ -21,6 +21,6 @@ dependencyResolutionManagement {
 
 rootProject.name = "StravaPoc"
 include(":app")
-include(":app:stravapoc")
+include(":wear")
 include(":core:architecture")
 include(":library:data")

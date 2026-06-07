@@ -10,11 +10,11 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/app" />
-            <option value="$PROJECT_DIR$/app/stravapoc" />
             <option value="$PROJECT_DIR$/core" />
             <option value="$PROJECT_DIR$/core/architecture" />
             <option value="$PROJECT_DIR$/library" />
             <option value="$PROJECT_DIR$/library/data" />
+            <option value="$PROJECT_DIR$/wear" />
           </set>
         </option>
       </GradleProjectSettings>
