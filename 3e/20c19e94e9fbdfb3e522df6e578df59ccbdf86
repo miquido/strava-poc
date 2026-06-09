@@ -1,0 +1,144 @@
+app/src/main/java/com/miquido/stravapoc/presentation/routedetail/RouteDetailSideEffect.kt
+  f39295935f0c72cf 3
+app/src/main/java/com/miquido/stravapoc/presentation/history/HistorySideEffect.kt
+  f39295935f0c72cf 3
+wear/src/main/java/com/miquido/stravapoc/wear/presentation/summary/WorkoutSummaryScreen.kt
+  f39295935f0c72cf 3-6,8,10,13,16,18-23,26,28-30,33-34,41-173,176-178,181-183,186-190,192-216
+app/src/main/java/com/miquido/stravapoc/presentation/history/HistoryViewModel.kt
+  f39295935f0c72cf 6-8,11,13-16,20-21,29-30
+app/src/main/java/com/miquido/stravapoc/sync/WorkoutResultReceiver.kt
+  f39295935f0c72cf 3-7,11,13,16-17,23,25,27,30-31,39,46,48,53-61,70-117
+app/src/main/res/drawable/ic_launcher_foreground.xml
+  f39295935f0c72cf 1,5-14
+wear/src/main/AndroidManifest.xml
+  f39295935f0c72cf 13,16,55-57
+app/src/main/java/com/miquido/stravapoc/ui/theme/Theme.kt
+  f39295935f0c72cf 26
+app/src/main/java/com/miquido/stravapoc/presentation/routedetail/RouteDetailViewState.kt
+  f39295935f0c72cf 5
+wear/src/main/java/com/miquido/stravapoc/wear/di/WearAppModule.kt
+  f39295935f0c72cf 4,6-7,10,14,16-22,24-31
+app/src/main/java/com/miquido/stravapoc/presentation/history/HistoryScreen.kt
+  f39295935f0c72cf 3-5,7-8,21-23,25,27,30,35-38,42-45,48,50-51,55-58,61,63,67-68,75-115,125-147,154-159,161-246,254,284-295,306-310,314-315,334-337
+settings.gradle.kts
+  f39295935f0c72cf 27
+app/src/main/java/com/miquido/stravapoc/presentation/routelist/RouteListScreen.kt
+  f39295935f0c72cf 32,36,39,42,46-47,54-67,71,93
+app/src/main/java/com/miquido/stravapoc/presentation/history/HistoryViewState.kt
+  f39295935f0c72cf 3,5-6
+app/src/main/java/com/miquido/stravapoc/presentation/home/HomeScreen.kt
+  f39295935f0c72cf 27-28,32,74-75
+wear/src/main/java/com/miquido/stravapoc/wear/presentation/workout/MetricsPage.kt
+  f39295935f0c72cf 5,10,14,19,33-36,39-66,68-75,77-78,81,84-89,91-102,104-105,108,111-116,122,124-128,137,139-141,146-173
+wear/src/main/java/com/miquido/stravapoc/wear/presentation/workout/MapPage.kt
+  f39295935f0c72cf 3-5,7-11,13-17,20-22,26-28,35-39,41-43,46-58,61-101
+app/src/main/java/com/miquido/stravapoc/presentation/routelist/RouteListSideEffect.kt
+  f39295935f0c72cf 3
+app/src/main/java/com/miquido/stravapoc/presentation/routedetail/RouteDetailViewModel.kt
+  f39295935f0c72cf 3-4,7-11,13-14,16-17,20-21,28-29,34,36,43
+app/src/main/java/com/miquido/stravapoc/presentation/routelist/RouteListViewState.kt
+  f39295935f0c72cf 6
+library/data/build.gradle.kts
+  f39295935f0c72cf 5,28-33
+library/data/src/main/java/com/miquido/stravapoc/library/data/repository/RouteRepositoryImpl.kt
+  f39295935f0c72cf 6,8-9
+wear/src/main/java/com/miquido/stravapoc/wear/data/RouteReceiver.kt
+  f39295935f0c72cf 11-12,14,17,34,43,48,51-55,64,66,79,89-97
+wear/src/main/java/com/miquido/stravapoc/wear/presentation/workout/WorkoutViewState.kt
+  f39295935f0c72cf 14-18
+wear/src/main/java/com/miquido/stravapoc/wear/data/local/WearDatabase.kt
+  f39295935f0c72cf 7-8,10-14,16-17,23-33,40-43
+app/src/main/java/com/miquido/stravapoc/presentation/routedetail/RouteDetailScreen.kt
+  f39295935f0c72cf 32,36-38,41-42,45,47,51-52,54-55,57-58,60,65-80,102,114-116,130
+app/src/main/java/com/miquido/stravapoc/presentation/routelist/RouteListViewModel.kt
+  f39295935f0c72cf 3-4,7-10,12-18,21,27
+library/data/src/main/java/com/miquido/stravapoc/library/data/db/dao/WorkoutResultDao.kt
+  f39295935f0c72cf 1,3-22
+app/src/main/java/com/miquido/stravapoc/presentation/historydetail/HistoryDetailViewModel.kt
+  f39295935f0c72cf 3-4,7-11,13-17,20,28-30,33-34
+wear/src/main/java/com/miquido/stravapoc/wear/presentation/workout/WorkoutScreen.kt
+  f39295935f0c72cf 5,8,15-16,19-21,23,25-26,28-29,35-37,41,52,60-91,96,112-170,172-178
+wear/src/main/res/drawable/ic_launcher_foreground.xml
+  f39295935f0c72cf 1,5-14
+wear/build.gradle.kts
+  f39295935f0c72cf 54,58,65,79
+app/src/main/java/com/miquido/stravapoc/presentation/activitytype/ActivityTypeViewState.kt
+  f39295935f0c72cf 5
+wear/src/main/java/com/miquido/stravapoc/wear/presentation/activityselection/ActivitySelectionViewModel.kt
+  f39295935f0c72cf 14,17,28,34,39,45,49,51-54,63,68,74,77-82,86-87
+wear/src/main/res/drawable/ic_launcher_background.xml
+  f39295935f0c72cf 3,8-20
+wear/src/main/java/com/miquido/stravapoc/wear/data/WorkoutResultSender.kt
+  f39295935f0c72cf 4,8-9,16-19,21-31,33-70
+app/src/main/java/com/miquido/stravapoc/ui/theme/Color.kt
+  f39295935f0c72cf 5-8
+app/src/main/AndroidManifest.xml
+  f39295935f0c72cf 6,9
+build.gradle.kts
+  f39295935f0c72cf 9
+app/src/main/java/com/miquido/stravapoc/sync/WearSyncManager.kt
+  f39295935f0c72cf 11,13
+app/src/main/java/com/miquido/stravapoc/presentation/activitytype/ActivityTypeSideEffect.kt
+  f39295935f0c72cf 5
+wear/src/main/java/com/miquido/stravapoc/wear/data/WorkoutService.kt
+  f39295935f0c72cf 18-19,21-24,28,38,48-51,53,59-65,77-84,86,95-151,153-197,203,211-212,215-219,230,235-239,247,261-268,279-283,289,298-299,324,345-346,361,371,374,382-384
+app/src/main/java/com/miquido/stravapoc/presentation/activitytype/ActivityTypeViewModel.kt
+  f39295935f0c72cf 3,7-12
+wear/src/main/java/com/miquido/stravapoc/wear/presentation/workout/WorkoutSideEffect.kt
+  f39295935f0c72cf 5
+wear/src/main/java/com/miquido/stravapoc/wear/presentation/MainActivity.kt
+  f39295935f0c72cf 7,13-16,19,23-28,30,36-61,67-69,71-76,79-83,86-91,96-103,106,108,111-112,117-135,138-142,148-149,154-161,166-181,185,188-191
+app/build.gradle.kts
+  f39295935f0c72cf 13,56,75-77
+gradle/libs.versions.toml
+  f39295935f0c72cf 27,34-36,71,80-83,92
+app/src/main/res/drawable/ic_launcher_background.xml
+  f39295935f0c72cf 3,8-20
+library/data/src/main/java/com/miquido/stravapoc/library/data/datasource/RouteLocalDataSource.kt
+  f39295935f0c72cf 5,7
+wear/src/main/res/values/strings.xml
+  f39295935f0c72cf 2
+wear/src/main/java/com/miquido/stravapoc/wear/presentation/activityselection/ActivitySelectionSideEffect.kt
+  f39295935f0c72cf 3-4,6
+library/data/src/main/java/com/miquido/stravapoc/library/data/model/WorkoutResult.kt
+  f39295935f0c72cf 7,9-10,13-15
+app/src/main/res/values/strings.xml
+  f39295935f0c72cf 8,45-50
+app/src/main/java/com/miquido/stravapoc/MainActivity.kt
+  f39295935f0c72cf 3-5,8,11-13,15,17,19,26-38,41-42
+app/src/main/java/com/miquido/stravapoc/presentation/historydetail/HistoryDetailViewState.kt
+  f39295935f0c72cf 4-5,7-8,10
+app/src/main/java/com/miquido/stravapoc/presentation/historydetail/HistoryDetailScreen.kt
+  f39295935f0c72cf 28,32-34,37-38,44,46,50-61,82-87,114-116,118-124,182-184,207-210
+wear/src/main/java/com/miquido/stravapoc/wear/presentation/activityselection/ActivitySelectionScreen.kt
+  f39295935f0c72cf 4,7-8,14,16-17,23,26-27,31,34,40-41,43-44,49-54,57,65,67-81
+wear/src/main/java/com/miquido/stravapoc/wear/presentation/workout/WorkoutViewModel.kt
+  f39295935f0c72cf 14,20,38,63,87-91,94-98
+app/src/main/java/com/miquido/stravapoc/presentation/activitytype/ActivityTypeScreen.kt
+  f39295935f0c72cf 27,30,33,36,40-41,43,48-60,70
+wear/src/main/java/com/miquido/stravapoc/presentation/theme/Theme.kt
+  f39295935f0c72cf 4,7-22,28,31
+wear/src/main/java/com/miquido/stravapoc/wear/presentation/activityselection/ActivitySelectionViewState.kt
+  f39295935f0c72cf 3-8,11,15-29
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "3e20c19e94e9fbdfb3e522df6e578df59ccbdf86",
+  "prompts": {
+    "f39295935f0c72cf": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "768a8b90-47ce-4855-aa2e-0aafd4e2fd3c",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Jakub Zajac",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 5661,
+      "overriden_lines": 0,
+      "messages_url": "https://gitai.miquido.dev/cas/a948bae8daf1ad3eaed99875a6d37470c47e54c2728e8c8fb358df02d35b9586"
+    }
+  }
+}
