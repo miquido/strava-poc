@@ -1,0 +1,24 @@
+.gitignore
+  f39295935f0c72cf 18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.2",
+  "base_commit_sha": "7dd323888c280f3df4e1d3baa6d408753910785e",
+  "prompts": {
+    "f39295935f0c72cf": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "768a8b90-47ce-4855-aa2e-0aafd4e2fd3c",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Jakub Zajac",
+      "messages": [],
+      "total_additions": 3,
+      "total_deletions": 1714,
+      "accepted_lines": 1871,
+      "overriden_lines": 3,
+      "messages_url": "https://gitai.miquido.dev/cas/c736c81056529a0ff80b13f9e644c11aa2fa9f340a8fc626f35a7f1a1d909e3b"
+    }
+  }
+}
