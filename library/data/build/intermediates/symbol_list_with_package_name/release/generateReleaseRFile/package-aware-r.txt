@@ -1,1 +1,0 @@
-com.miquido.stravapoc.library.data
