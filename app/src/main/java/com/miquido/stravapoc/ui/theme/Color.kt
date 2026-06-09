@@ -2,10 +2,10 @@ package com.miquido.stravapoc.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Red accent
-val StravaRed = Color(0xFFE8161B)
-val StravaRedDark = Color(0xFFB00E12)
-val StravaRedLight = Color(0xFFFF5252)
+// Orange accent (Strava brand color)
+val StravaRed = Color(0xFFFC4C02)
+val StravaRedDark = Color(0xFFCA3D02)
+val StravaRedLight = Color(0xFFFD9467)
 
 // Backgrounds
 val Black = Color(0xFF000000)

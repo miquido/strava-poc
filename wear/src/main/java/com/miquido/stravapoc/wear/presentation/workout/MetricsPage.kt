@@ -2,19 +2,21 @@ package com.miquido.stravapoc.wear.presentation.workout
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.MaterialTheme
@@ -28,45 +30,102 @@ fun MetricsPage(
     onLap: () -> Unit,
     onFinish: () -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 8.dp),
+    ScalingLazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(start = 12.dp, top = 36.dp, end = 12.dp, bottom = 44.dp),
+        autoCentering = null,
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
     ) {
-        MetricItem(label = "Czas", value = formatDuration(state.elapsedSeconds))
-        MetricItem(label = "Dystans", value = "%.2f km".format(state.distanceKm))
-        MetricItem(label = "Tempo", value = "${state.pacePerKm} /km")
-        MetricItem(label = "Okrążenie ${state.lapNumber}", value = "%.2f km".format(state.lapDistanceKm))
+        // --- PRIORYTET 1: Czas (największy) ---
+        item {
+            val timeColor = if (isPaused) Color.White.copy(alpha = 0.45f) else Color.White
+            MetricItemPrimary(
+                label = if (isPaused) "TIME  ⏸" else "TIME",
+                value = formatDuration(state.elapsedSeconds),
+                valueColor = timeColor
+            )
+        }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        // --- PRIORYTET 2: Dystans + Tempo obok siebie ---
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                MetricItemSecondary(
+                    label = "DISTANCE",
+                    value = "%.2f".format(state.distanceKm),
+                    unit = "km"
+                )
+                MetricItemSecondary(
+                    label = "PACE",
+                    value = state.pacePerKm,
+                    unit = "min/km"
+                )
+            }
+        }
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally)
-        ) {
+        // --- PRIORYTET 3: Okrążenie (dyskretne) ---
+        item {
+            Text(
+                text = "Lap ${state.lapNumber}  ·  ${"%.2f".format(state.lapDistanceKm)} km",
+                style = MaterialTheme.typography.caption1,
+                color = MaterialTheme.colors.onSurfaceVariant
+            )
+        }
+
+        // --- Przyciski (pionowo, jeden pod drugim, 75% szerokości) ---
+        item {
             Button(
                 onClick = onPauseResume,
+                modifier = Modifier.fillMaxWidth(0.75f),
                 colors = ButtonDefaults.secondaryButtonColors()
             ) {
-                Text(if (isPaused) "▶" else "⏸")
+                Text(
+                    text = if (isPaused) "Resume" else "Pause",
+                    fontSize = 14.sp,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center
+                )
             }
-            Button(onClick = onLap) {
-                Text("↻")
+        }
+        item {
+            Button(
+                onClick = onLap,
+                modifier = Modifier.fillMaxWidth(0.75f)
+            ) {
+                Text(
+                    text = "Lap",
+                    fontSize = 14.sp,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center
+                )
             }
+        }
+        item {
             Button(
                 onClick = onFinish,
+                modifier = Modifier.fillMaxWidth(0.75f),
                 colors = ButtonDefaults.primaryButtonColors()
             ) {
-                Text("■")
+                Text(
+                    text = "Finish",
+                    fontSize = 14.sp,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center
+                )
             }
         }
     }
 }
 
+/** Duży — czas; dominuje wizualnie na ekranie */
 @Composable
-private fun MetricItem(label: String, value: String) {
+private fun MetricItemPrimary(
+    label: String,
+    value: String,
+    valueColor: Color = Color.White
+) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             text = label,
@@ -75,10 +134,40 @@ private fun MetricItem(label: String, value: String) {
         )
         Text(
             text = value,
-            fontSize = 18.sp,
+            fontSize = 36.sp,
             fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center
+            color = valueColor,
+            textAlign = TextAlign.Center,
+            maxLines = 1
         )
+    }
+}
+
+/** Średni — dystans i tempo */
+@Composable
+private fun MetricItemSecondary(label: String, value: String, unit: String = "") {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.caption1,
+            color = MaterialTheme.colors.onSurfaceVariant
+        )
+        Row(verticalAlignment = Alignment.Bottom) {
+            Text(
+                text = value,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            )
+            if (unit.isNotEmpty()) {
+                Spacer(Modifier.width(2.dp))
+                Text(
+                    text = unit,
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colors.onSurfaceVariant
+                )
+            }
+        }
     }
 }
 

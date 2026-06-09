@@ -1,6 +1,5 @@
 package com.miquido.stravapoc.presentation.routedetail
 
-import android.app.Application
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -28,45 +27,57 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.miquido.stravapoc.R
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.MapProperties
+import com.google.maps.android.compose.MapType
+import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.rememberCameraPositionState
+import com.miquido.stravapoc.R
+import kotlinx.coroutines.flow.filterIsInstance
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RouteDetailScreen(
-    routeId: String,
+internal fun RouteDetailRoute(
     onBack: () -> Unit,
-    viewModel: RouteDetailViewModel = viewModel(
-        factory = RouteDetailViewModel.factory(
-            routeId,
-            LocalContext.current.applicationContext as Application
-        )
-    )
+    viewModel: RouteDetailViewModel = hiltViewModel()
 ) {
     val state by viewModel.viewState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
-    val msgSentSuccess = stringResource(R.string.route_sent_success)
-    val msgSentError = stringResource(R.string.route_sent_error)
+    val msgSuccess = stringResource(R.string.route_sent_success)
+    val msgError = stringResource(R.string.route_sent_error)
 
-    LaunchedEffect(Unit) {
-        viewModel.collectSideEffect<RouteDetailSideEffect>(this) { effect ->
+    LaunchedEffect(viewModel) {
+        viewModel.sideEffect.filterIsInstance<RouteDetailSideEffect>().collect { effect ->
             when (effect) {
-                is RouteDetailSideEffect.RouteSentSuccess ->
-                    snackbarHostState.showSnackbar(msgSentSuccess)
+                RouteDetailSideEffect.RouteSentSuccess ->
+                    snackbarHostState.showSnackbar(msgSuccess)
                 is RouteDetailSideEffect.RouteSentError ->
-                    snackbarHostState.showSnackbar(msgSentError.format(effect.message))
+                    snackbarHostState.showSnackbar(msgError.format(effect.message))
             }
         }
     }
 
+    RouteDetailScreen(
+        state = state,
+        onBack = onBack,
+        onSendToWatch = viewModel::onSendToWatch,
+        snackbarHostState = snackbarHostState
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun RouteDetailScreen(
+    state: RouteDetailViewState,
+    onBack: () -> Unit,
+    onSendToWatch: () -> Unit,
+    snackbarHostState: SnackbarHostState
+) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -88,7 +99,7 @@ fun RouteDetailScreen(
                     modifier = Modifier.align(Alignment.Center)
                 )
                 state.route != null -> {
-                    val route = state.route!!
+                    val route = state.route
                     val points = route.points.map { LatLng(it.lat, it.lng) }
                     val center = points.firstOrNull() ?: LatLng(52.0, 21.0)
                     val cameraState = rememberCameraPositionState {
@@ -100,7 +111,9 @@ fun RouteDetailScreen(
                             modifier = Modifier
                                 .weight(1f)
                                 .fillMaxWidth(),
-                            cameraPositionState = cameraState
+                            cameraPositionState = cameraState,
+                            uiSettings = MapUiSettings(zoomControlsEnabled = false),
+                            properties = MapProperties(mapType = MapType.TERRAIN)
                         ) {
                             if (points.size >= 2) {
                                 Polyline(points = points, width = 8f)
@@ -114,7 +127,7 @@ fun RouteDetailScreen(
                             )
                             Spacer(modifier = Modifier.height(12.dp))
                             Button(
-                                onClick = viewModel::onSendToWatch,
+                                onClick = onSendToWatch,
                                 enabled = !state.isSending,
                                 modifier = Modifier.fillMaxWidth()
                             ) {

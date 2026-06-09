@@ -1,37 +1,35 @@
 package com.miquido.stravapoc.presentation.routelist
 
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.lifecycle.SavedStateHandle
+import androidx.navigation.toRoute
 import com.miquido.stravapoc.core.architecture.mvi.MviDefaultConfig
 import com.miquido.stravapoc.core.architecture.mvi.MviViewModel
-import com.miquido.stravapoc.di.AppModule
-import com.miquido.stravapoc.library.data.model.ActivityType
-import com.miquido.stravapoc.library.data.usecase.GetRoutesUseCase
+import com.miquido.stravapoc.library.usecase.GetRoutesUseCase
+import com.miquido.stravapoc.presentation.navigation.AppRoute
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
-class RouteListViewModel(
-    private val activityType: ActivityType,
-    private val getRoutesUseCase: GetRoutesUseCase
-) : MviViewModel<RouteListViewState>(RouteListViewState(activityType = activityType), MviDefaultConfig()) {
+@HiltViewModel
+internal class RouteListViewModel @Inject constructor(
+    private val getRoutesUseCase: GetRoutesUseCase,
+    savedStateHandle: SavedStateHandle
+) : MviViewModel<RouteListViewState>(RouteListViewState(), MviDefaultConfig()) {
+
+    private val route: AppRoute.RouteList = savedStateHandle.toRoute()
 
     init {
+        transform { copy(activityType = route.activityType) }
         loadRoutes()
     }
 
     private fun loadRoutes() = launch {
         transform { copy(isLoading = true, error = null) }
-        getRoutesUseCase(type = activityType)
+        getRoutesUseCase(type = route.activityType)
             .onSuccess { routes -> transform { copy(routes = routes, isLoading = false) } }
             .onFailure { e -> transform { copy(isLoading = false, error = e.message) } }
     }
 
     fun onRouteSelected(routeId: String) = launch {
         emitSideEffect(RouteListSideEffect.NavigateToDetail(routeId))
-    }
-
-    companion object {
-        fun factory(activityType: ActivityType): ViewModelProvider.Factory = viewModelFactory {
-            initializer { RouteListViewModel(activityType, AppModule.getRoutesUseCase) }
-        }
     }
 }

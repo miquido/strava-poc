@@ -24,12 +24,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.miquido.stravapoc.library.data.model.ActivityType
-import com.miquido.stravapoc.presentation.activitytype.ActivityTypeContent
-import com.miquido.stravapoc.presentation.history.HistoryContent
+import com.miquido.stravapoc.presentation.activitytype.ActivityTypeRoute
+import com.miquido.stravapoc.presentation.history.HistoryRoute
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(
+internal fun HomeScreen(
     onNavigateToRouteList: (ActivityType) -> Unit,
     onNavigateToHistoryDetail: (Long) -> Unit
 ) {
@@ -71,8 +71,8 @@ fun HomeScreen(
             label = "tab_content"
         ) { tab ->
             when (tab) {
-                0 -> ActivityTypeContent(onNavigateToRouteList = onNavigateToRouteList)
-                1 -> HistoryContent(onNavigateToDetail = onNavigateToHistoryDetail)
+                0 -> ActivityTypeRoute(onNavigateToRouteList = onNavigateToRouteList)
+                1 -> HistoryRoute(onNavigateToDetail = onNavigateToHistoryDetail)
             }
         }
     }

@@ -1,27 +1,24 @@
 package com.miquido.stravapoc.presentation.history
 
-import android.app.Application
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
 import com.miquido.stravapoc.core.architecture.mvi.MviDefaultConfig
 import com.miquido.stravapoc.core.architecture.mvi.MviViewModel
-import com.miquido.stravapoc.di.AppModule
+import com.miquido.stravapoc.library.usecase.DeleteWorkoutResultUseCase
+import com.miquido.stravapoc.library.usecase.GetWorkoutHistoryUseCase
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import javax.inject.Inject
 
-class HistoryViewModel(
-    application: Application
+@HiltViewModel
+internal class HistoryViewModel @Inject constructor(
+    private val getHistoryUseCase: GetWorkoutHistoryUseCase,
+    private val deleteWorkoutResultUseCase: DeleteWorkoutResultUseCase
 ) : MviViewModel<HistoryViewState>(HistoryViewState(), MviDefaultConfig()) {
 
-    private val useCases = AppModule.provideWorkoutUseCases(application)
-
     init {
-        useCases.getHistory()
-            .onEach { items ->
-                transform { copy(items = items, isLoading = false) }
-            }
+        getHistoryUseCase()
+            .onEach { items -> transform { copy(items = items, isLoading = false) } }
             .launchIn(viewModelScope)
     }
 
@@ -29,9 +26,7 @@ class HistoryViewModel(
         emitSideEffect(HistorySideEffect.NavigateToDetail(id))
     }
 
-    companion object {
-        fun factory(application: Application): ViewModelProvider.Factory = viewModelFactory {
-            initializer { HistoryViewModel(application) }
-        }
+    fun onDeleteItem(id: Long) = launch {
+        deleteWorkoutResultUseCase(id)
     }
 }

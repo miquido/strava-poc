@@ -10,17 +10,22 @@ import android.content.pm.ServiceInfo
 import android.os.Binder
 import android.os.IBinder
 import android.os.PowerManager
-import android.os.SystemClock
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.wear.ongoing.OngoingActivity
 import androidx.wear.ongoing.Status
-import com.miquido.stravapoc.library.data.model.WorkoutResult
+import com.miquido.stravapoc.library.data.model.ActivityType
+import com.miquido.stravapoc.library.data.model.RoutePoint
 import com.miquido.stravapoc.wear.R
+import com.miquido.stravapoc.wear.data.location.MockLocationSource
+import com.miquido.stravapoc.wear.data.location.RealLocationSource
+import com.miquido.stravapoc.wear.data.location.haversineDistanceKm
+import com.miquido.stravapoc.wear.data.location.trackingConstraints
 import com.miquido.stravapoc.wear.di.WearAppModule
 import com.miquido.stravapoc.wear.presentation.MainActivity
 import com.miquido.stravapoc.wear.presentation.workout.WorkoutViewState
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -30,6 +35,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class WorkoutService : Service() {
@@ -39,12 +45,23 @@ class WorkoutService : Service() {
     }
 
     private val binder = LocalBinder()
-    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
+        Log.e(TAG, "Unhandled exception in WorkoutService coroutine", throwable)
+    }
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default + exceptionHandler)
     private var timerJob: Job? = null
+    private var locationJob: Job? = null
     private var currentRouteId: String = ""
 
     private val _state = MutableStateFlow<WorkoutViewState>(WorkoutViewState.Idle)
     val state: StateFlow<WorkoutViewState> = _state.asStateFlow()
+
+    // Ostatni punkt GPS od którego liczymy przyrost dystansu.
+    // Celowo NIE jest częścią WorkoutViewState — to wewnętrzny baseline serwisu.
+    // currentLocation w stanie jest zawsze aktualizowany (dla mapy), natomiast
+    // distanceBaseLocation aktualizujemy TYLKO gdy ruch przekroczy próg jitteru.
+    private var distanceBaseLocation: RoutePoint? = null
+    private var currentActivityType: ActivityType = ActivityType.RUNNING
 
     private val wakeLock: PowerManager.WakeLock by lazy {
         (getSystemService(Context.POWER_SERVICE) as PowerManager)
@@ -57,8 +74,16 @@ class WorkoutService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val routeId = intent?.getStringExtra(EXTRA_ROUTE_ID)
         Log.d(TAG, "onStartCommand routeId=$routeId state=${_state.value::class.simpleName}")
-        if (routeId != null && _state.value is WorkoutViewState.Idle) {
+        if (routeId != null && routeId.isNotEmpty() && _state.value is WorkoutViewState.Idle) {
+            // Odczytaj ActivityType z Intentu — dla predefinowanych tras zostanie nadpisany
+            // przez route.activityType po załadowaniu trasy w launchWorkout().
+            val activityTypeName = intent.getStringExtra(EXTRA_ACTIVITY_TYPE)
+            currentActivityType = activityTypeName
+                ?.let { runCatching { ActivityType.valueOf(it) }.getOrNull() }
+                ?: ActivityType.RUNNING
+            distanceBaseLocation = null
             currentRouteId = routeId
+            WorkoutPreferences.save(applicationContext, routeId)
             startForegroundWithNotification()
             launchWorkout(routeId)
         }
@@ -67,18 +92,115 @@ class WorkoutService : Service() {
 
     private fun launchWorkout(routeId: String) {
         serviceScope.launch {
-            WearAppModule.getRouteByIdUseCase(routeId)
-                .onSuccess { route ->
-                    _state.value = WorkoutViewState.Active(routePoints = route.points)
-                    wakeLock.acquire(4 * 60 * 60 * 1000L)
-                    startTimer()
-                    updateNotification()
+            if (routeId == CUSTOM_ROUTE_ID) {
+                // Custom Activity — brak trasy, prawdziwy GPS
+                val activeState = WorkoutViewState.Active(routePoints = emptyList())
+                _state.value = activeState
+                wakeLock.acquire(4 * 60 * 60 * 1000L)
+                startTimer()
+                startLocationUpdates(routeId, initialProgressKm = 0.0, routePoints = emptyList())
+                updateNotification()
+            } else {
+                WearAppModule.getRouteByIdUseCase(routeId)
+                    .onSuccess { route ->
+                        // Trasa zna swój typ aktywności — nadpisz to co przyszło z Intentu
+                        currentActivityType = route.activityType
+                        distanceBaseLocation = null
+                        val activeState = WorkoutViewState.Active(routePoints = route.points)
+                        _state.value = activeState
+                        wakeLock.acquire(4 * 60 * 60 * 1000L)
+                        startTimer()
+                        startLocationUpdates(routeId, initialProgressKm = 0.0, routePoints = route.points)
+                        updateNotification()
+                    }
+                    .onFailure { e ->
+                        Log.e(TAG, "Route not found: $routeId", e)
+                        val activeState = WorkoutViewState.Active(routePoints = emptyList())
+                        _state.value = activeState
+                        wakeLock.acquire(4 * 60 * 60 * 1000L)
+                        startTimer()
+                        startLocationUpdates(routeId, initialProgressKm = 0.0, routePoints = emptyList())
+                        updateNotification()
+                    }
+            }
+        }
+    }
+
+    /**
+     * Uruchamia odpowiednie źródło lokalizacji (mock lub rzeczywisty GPS).
+     * Każda emisja punktu GPS wywołuje updateFromLocation().
+     */
+    private fun startLocationUpdates(
+        routeId: String,
+        initialProgressKm: Double,
+        routePoints: List<RoutePoint>
+    ) {
+        locationJob?.cancel()
+        val source = if (routeId == CUSTOM_ROUTE_ID) {
+            RealLocationSource(applicationContext)
+        } else {
+            MockLocationSource(
+                routePoints = routePoints,
+                speedKmh = currentActivityType.trackingConstraints.mockSpeedKmh,
+                initialProgressKm = initialProgressKm
+            )
+        }
+        locationJob = serviceScope.launch {
+            runCatching {
+                source.locations.collect { point ->
+                    updateFromLocation(point)
                 }
+            }.onFailure { e ->
+                Log.e(TAG, "Location collection failed", e)
+            }
+        }
+    }
+
+    /**
+     * Aktualizuje stan po odebraniu nowego punktu GPS.
+     *
+     * Kluczowe rozróżnienie:
+     * - [distanceBaseLocation] — ostatni *zaakceptowany* punkt (aktualizowany tylko gdy
+     *   ruch > jitter). Służy wyłącznie do obliczania przyrostu dystansu.
+     * - [WorkoutViewState.Active.currentLocation] — zawsze najnowsza pozycja GPS.
+     *   Używana przez mapę i marker pozycji.
+     *
+     * Dzięki temu wolne aktywności (chód ~1.4 m/s, bieg ~2.8 m/s) poprawnie akumulują
+     * dystans — każda delta jest liczona od OSTATNIO ZAAKCEPTOWANEGO punktu, a nie od
+     * zawsze-aktualnego currentLocation.
+     */
+    private fun updateFromLocation(point: RoutePoint) {
+        _state.update { current ->
+            val active = current as? WorkoutViewState.Active ?: return@update current
+            val constraints = currentActivityType.trackingConstraints
+
+            val delta = distanceBaseLocation?.let { haversineDistanceKm(it, point) } ?: 0.0
+            // Odrzuć NaN/Infinity i teleportację GPS (> maxDeltaKm na update)
+            if (delta.isNaN() || delta.isInfinite() || delta > constraints.maxDeltaKm) return@update current
+
+            val effectiveDelta = if (delta < constraints.jitterKm) 0.0 else delta
+            // Przesuń bazę tylko gdy ruch jest istotny — małe ruchy akumulują się
+            // do następnego zaakceptowanego punktu zamiast być bezpowrotnie zerowane.
+            // Przy pierwszym punkcie (null): ustaw bazę bez liczenia dystansu.
+            // Przy kolejnych: przesuń bazę tylko gdy ruch > próg jitteru.
+            if (distanceBaseLocation == null || effectiveDelta > 0.0) {
+                distanceBaseLocation = point
+            }
+
+            val newDistance = active.distanceKm + effectiveDelta
+            active.copy(
+                distanceKm = newDistance,
+                lapDistanceKm = active.lapDistanceKm + effectiveDelta,
+                pacePerKm = formatPace(newDistance, active.elapsedSeconds),
+                currentLocation = point,          // zawsze aktualizuj — dla mapy
+                trackedPoints = active.trackedPoints + point
+            )
         }
     }
 
     fun pause() {
         timerJob?.cancel()
+        locationJob?.cancel()
         val active = _state.value as? WorkoutViewState.Active ?: return
         _state.value = WorkoutViewState.Paused(active)
         updateNotification()
@@ -86,14 +208,16 @@ class WorkoutService : Service() {
 
     fun resume() {
         val paused = _state.value as? WorkoutViewState.Paused ?: return
+        // Przywróć bazę dystansu do ostatniej pozycji GPS z przed pauzy
+        distanceBaseLocation = paused.snapshot.currentLocation
         _state.value = paused.snapshot
         startTimer()
+        startLocationUpdates(
+            routeId = currentRouteId,
+            initialProgressKm = paused.snapshot.distanceKm,
+            routePoints = paused.snapshot.routePoints
+        )
         updateNotification()
-    }
-
-    private fun updateNotification() {
-        val notificationManager = getSystemService(NotificationManager::class.java)
-        notificationManager.notify(NOTIFICATION_ID, buildNotification())
     }
 
     fun lap() {
@@ -103,9 +227,15 @@ class WorkoutService : Service() {
 
     fun finish() {
         timerJob?.cancel()
+        locationJob?.cancel()
         val active = _state.value as? WorkoutViewState.Active
             ?: (_state.value as? WorkoutViewState.Paused)?.snapshot
             ?: return
+
+        // Decimate to max 2000 points to stay within Data Layer 100 KB limit (~30 B/point JSON)
+        val raw = active.trackedPoints
+        val step = maxOf(1, raw.size / 2000)
+        WearAppModule.pendingTrackedPoints = raw.filterIndexed { i, _ -> i % step == 0 }
 
         _state.value = WorkoutViewState.Finished(
             totalDistanceKm = active.distanceKm,
@@ -114,19 +244,8 @@ class WorkoutService : Service() {
             routeId = currentRouteId
         )
 
-        serviceScope.launch {
-            WearAppModule.workoutResultSender(applicationContext).sendResult(
-                WorkoutResult(
-                    routeId = currentRouteId,
-                    totalDistanceKm = active.distanceKm,
-                    totalDurationSeconds = active.elapsedSeconds,
-                    laps = active.lapNumber
-                )
-            )
-        }
-
+        WorkoutPreferences.clear(applicationContext)
         if (wakeLock.isHeld) wakeLock.release()
-        // Remove foreground + OngoingActivity indicator from watch face
         ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
         stopSelf()
     }
@@ -134,48 +253,21 @@ class WorkoutService : Service() {
     private fun startTimer() {
         timerJob?.cancel()
         timerJob = serviceScope.launch {
-            // 1. Pobieramy obecny stan (ile już sekund upłynęło, ważne w przypadku powrotu z pauzy)
             val active = _state.value as? WorkoutViewState.Active ?: return@launch
-
-            // 2. Obliczamy teoretyczny czas startu tego segmentu treningu oparty na zegarze urządzenia
             val startRealtime = android.os.SystemClock.elapsedRealtime() - (active.elapsedSeconds * 1000L)
 
             while (true) {
                 delay(1000)
-
-                // 3. Obliczamy całkowity czas w sekundach, jaki minął od naszego startRealtime
-                val currentRealtime = android.os.SystemClock.elapsedRealtime()
-                val totalElapsedSeconds = (currentRealtime - startRealtime) / 1000L
-
-                // Przekazujemy dokładny czas do tick()
-                tick(totalElapsedSeconds)
+                val totalElapsedSeconds = (android.os.SystemClock.elapsedRealtime() - startRealtime) / 1000L
+                _state.update { current ->
+                    val a = current as? WorkoutViewState.Active ?: return@update current
+                    a.copy(
+                        elapsedSeconds = totalElapsedSeconds,
+                        pacePerKm = formatPace(a.distanceKm, totalElapsedSeconds)
+                    )
+                }
             }
         }
-    }
-
-    private fun tick(exactElapsedSeconds: Long) {
-        val active = _state.value as? WorkoutViewState.Active ?: return
-
-        // Sprawdzamy ile faktycznie sekund przybyło od ostatniego wywołania (zazwyczaj 1, ale eliminuje to błędy opóźnień)
-        val deltaSeconds = exactElapsedSeconds - active.elapsedSeconds
-        if (deltaSeconds <= 0L) return
-
-        // Obliczamy nowy dystans proporcjonalnie do faktycznego upływu czasu
-        // (10.0 km/h przeliczone na dystans pokonany w czasie deltaSeconds)
-        val addedDistance = deltaSeconds * (10.0 / 3600.0)
-        val newDistance = active.distanceKm + addedDistance
-
-        val newIndex = minOf(active.routePointIndex + 1, active.routePoints.lastIndex)
-
-        _state.value = active.copy(
-            elapsedSeconds = exactElapsedSeconds,
-            distanceKm = newDistance,
-            pacePerKm = formatPace(newDistance, exactElapsedSeconds),
-            routePointIndex = newIndex,
-            lapDistanceKm = active.lapDistanceKm + addedDistance
-        )
-
-        // Zgodnie z wcześniejszymi zmianami usunęliśmy stąd updateNotification() !
     }
 
     private fun formatPace(distanceKm: Double, seconds: Long): String {
@@ -184,12 +276,17 @@ class WorkoutService : Service() {
         return "%d:%02d".format(paceSeconds / 60, paceSeconds % 60)
     }
 
+    private fun updateNotification() {
+        val notificationManager = getSystemService(NotificationManager::class.java)
+        notificationManager.notify(NOTIFICATION_ID, buildNotification())
+    }
+
     private fun startForegroundWithNotification() {
         val manager = getSystemService(NotificationManager::class.java)
         manager.createNotificationChannel(
             NotificationChannel(
                 CHANNEL_ID,
-                "Aktywny trening",
+                "Active workout",
                 NotificationManager.IMPORTANCE_DEFAULT
             )
         )
@@ -198,8 +295,8 @@ class WorkoutService : Service() {
             NOTIFICATION_ID,
             buildNotification(),
             ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
-        )    }
-
+        )
+    }
 
     private fun buildNotification(): android.app.Notification {
         val openIntent = Intent(this, MainActivity::class.java).apply {
@@ -213,7 +310,6 @@ class WorkoutService : Service() {
         val currentState = _state.value
         val isPaused = currentState is WorkoutViewState.Paused
 
-        // Wyciągamy dane niezależnie czy to Active, czy zapisany stan w Paused
         val activeData = when (currentState) {
             is WorkoutViewState.Active -> currentState
             is WorkoutViewState.Paused -> currentState.snapshot
@@ -225,19 +321,13 @@ class WorkoutService : Service() {
 
         val notificationBuilder = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_run)
-            // Zmieniamy tytuł dla lepszego UX
-            .setContentTitle(if (isPaused) "Trening wstrzymany" else "Trening w toku")
+            .setContentTitle(if (isPaused) "Workout paused" else "Workout in progress")
             .setContentIntent(pendingIntent)
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setCategory(NotificationCompat.CATEGORY_WORKOUT)
 
-        // Pobranie aktualnego czasu trwania z StateFlow, aby stoper wiedział od kiedy liczyć
-//        val elapsedMillis = (activeState?.elapsedSeconds ?: 0L) * 1000L
-//        val startTimeMillis = SystemClock.elapsedRealtime() - elapsedMillis
-
-        // Tworzenie statusu widocznego na tarczy zegarka (np. 00:15)
         val statusBuilder = Status.Builder()
 
         if (isPaused) {
@@ -252,31 +342,23 @@ class WorkoutService : Service() {
                 String.format(java.util.Locale.US, "%02d:%02d", minutes, seconds)
             }
 
-            notificationBuilder.setContentText("Czas: $staticTimeText")
-
-            // 3. Status na tarczy zegarka to teraz zwykły tekst, a nie stoper
-            statusBuilder.addTemplate("#time#")
-                .addPart("time", Status.TextPart(staticTimeText))
-
+            notificationBuilder.setContentText("Time: $staticTimeText")
+            statusBuilder.addTemplate("#time#").addPart("time", Status.TextPart(staticTimeText))
         } else {
             val notificationBaseTime = System.currentTimeMillis() - elapsedMillis
             val ongoingActivityBaseTime = android.os.SystemClock.elapsedRealtime() - elapsedMillis
 
-            // 1. Włączamy systemowy stoper
             notificationBuilder.setUsesChronometer(true)
             notificationBuilder.setWhen(notificationBaseTime)
-
-            // 2. Status na tarczy zegarka to automatyczny stoper
             statusBuilder.addTemplate("#time#")
                 .addPart("time", Status.StopwatchPart(ongoingActivityBaseTime))
-
         }
 
         val ongoingActivity =
             OngoingActivity.Builder(applicationContext, NOTIFICATION_ID, notificationBuilder)
                 .setStaticIcon(R.drawable.ic_run)
                 .setTouchIntent(pendingIntent)
-                .setStatus(statusBuilder.build()) // Wpięcie statusu!
+                .setStatus(statusBuilder.build())
                 .build()
 
         ongoingActivity.apply(applicationContext)
@@ -286,8 +368,10 @@ class WorkoutService : Service() {
 
     override fun onDestroy() {
         timerJob?.cancel()
+        locationJob?.cancel()
         serviceScope.cancel()
         if (wakeLock.isHeld) wakeLock.release()
+        WorkoutPreferences.clear(applicationContext)
         super.onDestroy()
     }
 
@@ -295,6 +379,9 @@ class WorkoutService : Service() {
         private const val TAG = "WorkoutService"
         const val ACTION_START = "com.miquido.stravapoc.WORKOUT_START"
         const val EXTRA_ROUTE_ID = "extra_route_id"
+        const val EXTRA_ACTIVITY_TYPE = "extra_activity_type"
+        /** Sentinel routeId meaning "no specific route — custom activity". */
+        const val CUSTOM_ROUTE_ID = "_custom_"
         private const val CHANNEL_ID = "workout_channel_v2"
         private const val NOTIFICATION_ID = 2001
     }

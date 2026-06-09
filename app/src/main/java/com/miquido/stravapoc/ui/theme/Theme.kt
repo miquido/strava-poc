@@ -23,7 +23,7 @@ private val AppColorScheme = darkColorScheme(
     surfaceVariant = SurfaceVariantDark,
     onSurfaceVariant = OnBlackSecondary,
     outline = Color(0xFF3A3A3A),
-    error = Color(0xFFFF5252),
+    error = StravaRedLight,
     onError = OnBlack,
 )
 

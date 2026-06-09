@@ -1,6 +1,5 @@
 package com.miquido.stravapoc.presentation.historydetail
 
-import android.app.Application
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,34 +23,42 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.miquido.stravapoc.R
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.MapProperties
+import com.google.maps.android.compose.MapType
+import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.rememberCameraPositionState
+import com.miquido.stravapoc.R
+import com.miquido.stravapoc.library.data.model.ActivityType
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HistoryDetailScreen(
-    workoutId: Long,
+internal fun HistoryDetailRoute(
     onBack: () -> Unit,
-    viewModel: HistoryDetailViewModel = viewModel(
-        factory = HistoryDetailViewModel.factory(
-            workoutId,
-            LocalContext.current.applicationContext as Application
-        )
-    )
+    viewModel: HistoryDetailViewModel = hiltViewModel()
 ) {
     val state by viewModel.viewState.collectAsState()
 
+    HistoryDetailScreen(
+        state = state,
+        onBack = onBack
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun HistoryDetailScreen(
+    state: HistoryDetailViewState,
+    onBack: () -> Unit
+) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -72,15 +79,17 @@ fun HistoryDetailScreen(
                     modifier = Modifier.align(Alignment.Center)
                 )
                 state.entity != null -> {
-                    val entity = state.entity!!
-                    val points = state.route?.points?.map { LatLng(it.lat, it.lng) } ?: emptyList()
-                    val center = points.firstOrNull() ?: LatLng(52.0, 21.0)
+                    val entity = state.entity
+                    val routePoints = state.route?.points?.map { LatLng(it.lat, it.lng) } ?: emptyList()
+                    val trackedLatLngs = state.trackedPoints.map { LatLng(it.lat, it.lng) }
+                    val center = trackedLatLngs.firstOrNull()
+                        ?: routePoints.firstOrNull()
+                        ?: LatLng(52.0, 21.0)
                     val cameraState = rememberCameraPositionState {
                         position = CameraPosition.fromLatLngZoom(center, 14f)
                     }
 
                     Column(modifier = Modifier.fillMaxSize()) {
-                        // Data + badge
                         Row(
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -98,19 +107,24 @@ fun HistoryDetailScreen(
                             )
                         }
 
-                        // Mapa
                         GoogleMap(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .weight(1f),
-                            cameraPositionState = cameraState
+                            cameraPositionState = cameraState,
+                            uiSettings = MapUiSettings(zoomControlsEnabled = false),
+                            properties = MapProperties(mapType = MapType.TERRAIN)
                         ) {
-                            if (points.size >= 2) {
-                                Polyline(points = points, width = 8f)
+                            // Predefined route (blue) — only shown when no tracked GPS data
+                            if (trackedLatLngs.size < 2 && routePoints.size >= 2) {
+                                Polyline(points = routePoints, color = androidx.compose.ui.graphics.Color.Blue, width = 8f)
+                            }
+                            // Tracked GPS route (red)
+                            if (trackedLatLngs.size >= 2) {
+                                Polyline(points = trackedLatLngs, color = androidx.compose.ui.graphics.Color(0xFFFC4C02), width = 8f)
                             }
                         }
 
-                        // Metryki 2x2
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -165,21 +179,9 @@ private fun MetricTile(
 ) {
     Card(modifier = modifier) {
         Column(modifier = Modifier.padding(14.dp)) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Text(
-                text = value,
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.primary
-            )
-            Text(
-                text = unit,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Text(text = label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(text = value, style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.primary)
+            Text(text = unit, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -202,9 +204,8 @@ private fun formatPace(distanceKm: Double, durationSeconds: Long): String {
     return "%d:%02d".format(m, s)
 }
 
-private fun String.toDisplayName(): String = when (this) {
-    "RUNNING" -> "Running"
-    "CYCLING" -> "Cycling"
-    "WALKING" -> "Walking"
-    else -> this
+private fun ActivityType.toDisplayName(): String = when (this) {
+    ActivityType.RUNNING -> "Running"
+    ActivityType.CYCLING -> "Cycling"
+    ActivityType.WALKING -> "Walking"
 }

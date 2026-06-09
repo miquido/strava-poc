@@ -51,15 +51,18 @@ android {
 dependencies {
     implementation(project(":core:architecture"))
     implementation(project(":library:data"))
+    implementation(project(":library:usecase"))
 
     implementation(libs.play.services.wearable)
     implementation(libs.play.services.maps)
+    implementation(libs.play.services.location)
     implementation(libs.maps.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material)
+    implementation(libs.material.icons.extended)
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.wear.tooling.preview)
     implementation(libs.androidx.activity.compose)
@@ -73,6 +76,7 @@ dependencies {
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)
     implementation(libs.wear.ongoing)
+    implementation(libs.androidx.wear)
 
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)

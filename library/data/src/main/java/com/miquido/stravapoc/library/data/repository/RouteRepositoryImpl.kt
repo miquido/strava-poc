@@ -3,9 +3,10 @@ package com.miquido.stravapoc.library.data.repository
 import com.miquido.stravapoc.library.data.datasource.RouteLocalDataSource
 import com.miquido.stravapoc.library.data.model.ActivityType
 import com.miquido.stravapoc.library.data.model.Route
+import javax.inject.Inject
 
-class RouteRepositoryImpl(
-    private val dataSource: RouteLocalDataSource = RouteLocalDataSource()
+internal class RouteRepositoryImpl @Inject constructor(
+    private val dataSource: RouteLocalDataSource
 ) : RouteRepository {
 
     override suspend fun getRoutes(type: ActivityType?): Result<List<Route>> =

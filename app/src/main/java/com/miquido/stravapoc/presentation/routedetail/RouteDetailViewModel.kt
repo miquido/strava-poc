@@ -1,20 +1,23 @@
 package com.miquido.stravapoc.presentation.routedetail
 
-import android.app.Application
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.lifecycle.SavedStateHandle
+import androidx.navigation.toRoute
 import com.miquido.stravapoc.core.architecture.mvi.MviDefaultConfig
 import com.miquido.stravapoc.core.architecture.mvi.MviViewModel
-import com.miquido.stravapoc.di.AppModule
-import com.miquido.stravapoc.library.data.usecase.GetRouteByIdUseCase
-import com.miquido.stravapoc.sync.WearSyncManager
+import com.miquido.stravapoc.library.usecase.GetRouteByIdUseCase
+import com.miquido.stravapoc.presentation.navigation.AppRoute
+import com.miquido.stravapoc.sync.RouteSender
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
-class RouteDetailViewModel(
-    private val routeId: String,
+@HiltViewModel
+internal class RouteDetailViewModel @Inject constructor(
     private val getRouteByIdUseCase: GetRouteByIdUseCase,
-    private val wearSyncManager: WearSyncManager
+    private val routeSender: RouteSender,
+    savedStateHandle: SavedStateHandle
 ) : MviViewModel<RouteDetailViewState>(RouteDetailViewState(), MviDefaultConfig()) {
+
+    private val route: AppRoute.RouteDetail = savedStateHandle.toRoute()
 
     init {
         loadRoute()
@@ -22,35 +25,22 @@ class RouteDetailViewModel(
 
     private fun loadRoute() = launch {
         transform { copy(isLoading = true, error = null) }
-        getRouteByIdUseCase(routeId)
-            .onSuccess { route -> transform { copy(route = route, isLoading = false) } }
+        getRouteByIdUseCase(route.routeId)
+            .onSuccess { r -> transform { copy(route = r, isLoading = false) } }
             .onFailure { e -> transform { copy(isLoading = false, error = e.message) } }
     }
 
     fun onSendToWatch() = launch {
-        val route = viewState.value.route ?: return@launch
+        val r = viewState.value.route ?: return@launch
         transform { copy(isSending = true) }
-        wearSyncManager.sendRoute(route)
+        routeSender.send(r)
             .onSuccess {
                 transform { copy(isSending = false) }
                 emitSideEffect(RouteDetailSideEffect.RouteSentSuccess)
             }
             .onFailure { e ->
                 transform { copy(isSending = false) }
-                emitSideEffect(RouteDetailSideEffect.RouteSentError(e.message ?: "Błąd wysyłki"))
-            }
-    }
-
-    companion object {
-        fun factory(routeId: String, application: Application): ViewModelProvider.Factory =
-            viewModelFactory {
-                initializer {
-                    RouteDetailViewModel(
-                        routeId = routeId,
-                        getRouteByIdUseCase = AppModule.getRouteByIdUseCase,
-                        wearSyncManager = WearSyncManager(application)
-                    )
-                }
+                emitSideEffect(RouteDetailSideEffect.RouteSentError(e.message ?: "Failed to send route"))
             }
     }
 }

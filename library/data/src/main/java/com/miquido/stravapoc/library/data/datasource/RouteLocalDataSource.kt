@@ -2,8 +2,9 @@ package com.miquido.stravapoc.library.data.datasource
 
 import com.miquido.stravapoc.library.data.model.ActivityType
 import com.miquido.stravapoc.library.data.model.Route
+import javax.inject.Inject
 
-class RouteLocalDataSource {
+class RouteLocalDataSource @Inject constructor() {
 
     fun getRoutes(type: ActivityType? = null): List<Route> =
         if (type == null) mockRoutes else mockRoutes.filter { it.activityType == type }

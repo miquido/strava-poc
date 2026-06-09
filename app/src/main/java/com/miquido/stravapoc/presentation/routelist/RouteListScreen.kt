@@ -29,33 +29,46 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.miquido.stravapoc.R
 import com.miquido.stravapoc.library.data.model.ActivityType
 import com.miquido.stravapoc.library.data.model.Route
+import kotlinx.coroutines.flow.filterIsInstance
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RouteListScreen(
-    activityType: ActivityType,
+internal fun RouteListRoute(
     onBack: () -> Unit,
     onNavigateToDetail: (String) -> Unit,
-    viewModel: RouteListViewModel = viewModel(factory = RouteListViewModel.factory(activityType))
+    viewModel: RouteListViewModel = hiltViewModel()
 ) {
     val state by viewModel.viewState.collectAsState()
 
-    LaunchedEffect(Unit) {
-        viewModel.collectSideEffect<RouteListSideEffect>(this) { effect ->
+    LaunchedEffect(viewModel) {
+        viewModel.sideEffect.filterIsInstance<RouteListSideEffect>().collect { effect ->
             when (effect) {
                 is RouteListSideEffect.NavigateToDetail -> onNavigateToDetail(effect.routeId)
             }
         }
     }
 
+    RouteListScreen(
+        state = state,
+        onBack = onBack,
+        onRouteSelected = viewModel::onRouteSelected
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun RouteListScreen(
+    state: RouteListViewState,
+    onBack: () -> Unit,
+    onRouteSelected: (String) -> Unit
+) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(activityType.routeListTitleRes)) },
+                title = { Text(stringResource(state.activityType.routeListTitleRes)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back))
@@ -77,7 +90,7 @@ fun RouteListScreen(
                 )
                 else -> RouteList(
                     routes = state.routes,
-                    onRouteClick = viewModel::onRouteSelected
+                    onRouteClick = onRouteSelected
                 )
             }
         }

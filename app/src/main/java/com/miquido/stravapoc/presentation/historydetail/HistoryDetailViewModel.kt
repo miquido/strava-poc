@@ -1,19 +1,23 @@
 package com.miquido.stravapoc.presentation.historydetail
 
-import android.app.Application
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.lifecycle.SavedStateHandle
+import androidx.navigation.toRoute
 import com.miquido.stravapoc.core.architecture.mvi.MviDefaultConfig
 import com.miquido.stravapoc.core.architecture.mvi.MviViewModel
-import com.miquido.stravapoc.di.AppModule
+import com.miquido.stravapoc.library.usecase.GetRouteByIdUseCase
+import com.miquido.stravapoc.library.usecase.GetWorkoutResultByIdUseCase
+import com.miquido.stravapoc.presentation.navigation.AppRoute
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
-class HistoryDetailViewModel(
-    private val workoutId: Long,
-    application: Application
+@HiltViewModel
+internal class HistoryDetailViewModel @Inject constructor(
+    private val getWorkoutById: GetWorkoutResultByIdUseCase,
+    private val getRouteById: GetRouteByIdUseCase,
+    savedStateHandle: SavedStateHandle
 ) : MviViewModel<HistoryDetailViewState>(HistoryDetailViewState(), MviDefaultConfig()) {
 
-    private val workoutUseCases = AppModule.provideWorkoutUseCases(application)
+    private val route: AppRoute.HistoryDetail = savedStateHandle.toRoute()
 
     init {
         loadData()
@@ -21,21 +25,12 @@ class HistoryDetailViewModel(
 
     private fun loadData() = launch {
         transform { copy(isLoading = true, error = null) }
-        val entity = workoutUseCases.getById(workoutId)
-        if (entity == null) {
-            transform { copy(isLoading = false, error = "Nie znaleziono aktywności") }
+        val workout = getWorkoutById(route.workoutId)
+        if (workout == null) {
+            transform { copy(isLoading = false, error = "Activity not found") }
             return@launch
         }
-        val route = runCatching {
-            AppModule.getRouteByIdUseCase(entity.routeId).getOrNull()
-        }.getOrNull()
-        transform { copy(entity = entity, route = route, isLoading = false) }
-    }
-
-    companion object {
-        fun factory(workoutId: Long, application: Application): ViewModelProvider.Factory =
-            viewModelFactory {
-                initializer { HistoryDetailViewModel(workoutId, application) }
-            }
+        val r = runCatching { getRouteById(workout.routeId).getOrNull() }.getOrNull()
+        transform { copy(entity = workout, route = r, trackedPoints = workout.trackedPoints, isLoading = false) }
     }
 }

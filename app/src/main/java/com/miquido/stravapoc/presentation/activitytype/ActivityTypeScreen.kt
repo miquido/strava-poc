@@ -24,27 +24,40 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.miquido.stravapoc.R
 import com.miquido.stravapoc.library.data.model.ActivityType
+import kotlinx.coroutines.flow.filterIsInstance
 
 @Composable
-fun ActivityTypeContent(
+internal fun ActivityTypeRoute(
     onNavigateToRouteList: (ActivityType) -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: ActivityTypeViewModel = viewModel(factory = ActivityTypeViewModel.Factory)
+    viewModel: ActivityTypeViewModel = hiltViewModel()
 ) {
     val state by viewModel.viewState.collectAsState()
 
-    LaunchedEffect(Unit) {
-        viewModel.collectSideEffect<ActivityTypeSideEffect>(this) { effect ->
+    LaunchedEffect(viewModel) {
+        viewModel.sideEffect.filterIsInstance<ActivityTypeSideEffect>().collect { effect ->
             when (effect) {
-                is ActivityTypeSideEffect.NavigateToRouteList ->
-                    onNavigateToRouteList(effect.activityType)
+                is ActivityTypeSideEffect.NavigateToRouteList -> onNavigateToRouteList(effect.activityType)
             }
         }
     }
 
+    ActivityTypeScreen(
+        state = state,
+        onActivitySelected = viewModel::onActivitySelected,
+        modifier = modifier
+    )
+}
+
+@Composable
+private fun ActivityTypeScreen(
+    state: ActivityTypeViewState,
+    onActivitySelected: (ActivityType) -> Unit,
+    modifier: Modifier = Modifier
+) {
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -54,7 +67,7 @@ fun ActivityTypeContent(
         state.activityTypes.forEach { activityType ->
             ActivityTypeCard(
                 activityType = activityType,
-                onClick = { viewModel.onActivitySelected(activityType) }
+                onClick = { onActivitySelected(activityType) }
             )
         }
     }

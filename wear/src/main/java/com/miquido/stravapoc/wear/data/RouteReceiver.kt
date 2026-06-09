@@ -3,16 +3,18 @@ package com.miquido.stravapoc.wear.data
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.content.Context
 import android.content.Intent
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.DataMapItem
+import com.google.android.gms.wearable.Node
+import com.google.android.gms.wearable.Wearable
 import com.google.android.gms.wearable.WearableListenerService
+import kotlinx.coroutines.tasks.await
 import com.miquido.stravapoc.library.data.model.Route
-import com.miquido.stravapoc.wear.data.local.ReceivedRouteEntity
 import com.miquido.stravapoc.wear.data.local.WearDatabase
+import com.miquido.stravapoc.wear.data.repository.toWearEntity
 import com.miquido.stravapoc.wear.presentation.MainActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -26,10 +28,10 @@ class RouteReceiver : WearableListenerService() {
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override fun onDataChanged(events: DataEventBuffer) {
-        Log.e(TAG, "KUBAS onDataChanged fired")
         events
             .filter { it.dataItem.uri.path == "/route/selected" }
             .forEach { event ->
+                val uri = event.dataItem.uri
                 val json = DataMapItem.fromDataItem(event.dataItem)
                     .dataMap
                     .getString("route_json") ?: return@forEach
@@ -38,16 +40,19 @@ class RouteReceiver : WearableListenerService() {
                     .getOrElse { Log.e(TAG, "JSON parse error", it); return@forEach }
 
                 Log.d(TAG, "Route received: ${route.name}")
-                saveRoute(json)
+                saveRoute(route, uri)
                 showNotification(route)
             }
     }
 
-    private fun saveRoute(json: String) {
+    private fun saveRoute(route: Route, uri: android.net.Uri) {
         serviceScope.launch {
             WearDatabase.getInstance(applicationContext)
-                .receivedRouteDao()
-                .saveRoute(ReceivedRouteEntity(routeJson = json))
+                .wearRouteDao()
+                .insert(route.toWearEntity())
+            // Usuń data item po zapisaniu — putDataItem() tworzy trwały stan w Data Layer,
+            // który jest dostarczany ponownie przy każdej reinstalacji aplikacji.
+            Wearable.getDataClient(applicationContext).deleteDataItems(uri).await()
         }
     }
 
@@ -56,11 +61,9 @@ class RouteReceiver : WearableListenerService() {
 
         val channel = NotificationChannel(
             CHANNEL_ID,
-            "Trasy biegowe",
+            "Route notifications",
             NotificationManager.IMPORTANCE_HIGH
-        ).apply {
-            description = "Powiadomienia o nowych trasach z telefonu"
-        }
+        ).apply { description = "Notifications about new routes from the phone" }
         manager.createNotificationChannel(channel)
 
         val openIntent = Intent(this, MainActivity::class.java).apply {
@@ -73,7 +76,7 @@ class RouteReceiver : WearableListenerService() {
 
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_dialog_map)
-            .setContentTitle("Trasa gotowa!")
+            .setContentTitle("Route ready!")
             .setContentText(route.name)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
@@ -81,6 +84,15 @@ class RouteReceiver : WearableListenerService() {
             .build()
 
         manager.notify(NOTIFICATION_ID, notification)
+    }
+
+    @Suppress("DEPRECATION")
+    override fun onPeerConnected(peer: Node) {
+        super.onPeerConnected(peer)
+        Log.d(TAG, "Peer connected: ${peer.displayName} — retrying pending workout results")
+        serviceScope.launch {
+            WorkoutResultSender(applicationContext).retrySendPending()
+        }
     }
 
     override fun onDestroy() {

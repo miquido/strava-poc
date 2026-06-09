@@ -5,6 +5,7 @@
     <string name="tab_routes">Routes</string>
     <string name="tab_history">History</string>
     <string name="cd_back">Back</string>
+    <string name="cd_delete">Delete workout</string>
 
     <!-- Activity types -->
     <string name="activity_running">Running</string>
@@ -41,4 +42,10 @@
     <string name="unit_mmss">hh:mm:ss</string>
     <string name="unit_min_km">min/km</string>
     <string name="unit_laps">laps</string>
+
+    <!-- Delete confirmation dialog -->
+    <string name="delete_dialog_title">Delete workout</string>
+    <string name="delete_dialog_message">Are you sure you want to delete this workout?</string>
+    <string name="delete_dialog_confirm">Delete</string>
+    <string name="delete_dialog_cancel">Cancel</string>
 </resources>

@@ -11,11 +11,13 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.miquido.stravapoc.core.architecture.mvi.MviDefaultConfig
 import com.miquido.stravapoc.core.architecture.mvi.MviViewModel
+import com.miquido.stravapoc.library.data.model.ActivityType
 import com.miquido.stravapoc.wear.data.WorkoutService
 import kotlinx.coroutines.launch
 
 class WorkoutViewModel(
     private val routeId: String,
+    private val activityType: ActivityType,
     private val context: Context,
 ) : MviViewModel<WorkoutViewState>(WorkoutViewState.Idle, MviDefaultConfig()) {
 
@@ -33,6 +35,7 @@ class WorkoutViewModel(
                     if (serviceState is WorkoutViewState.Finished) {
                         emitSideEffect(
                             WorkoutSideEffect.NavigateToSummary(
+                                routeId = serviceState.routeId,
                                 distanceKm = serviceState.totalDistanceKm,
                                 durationSecs = serviceState.totalSeconds,
                                 laps = serviceState.laps
@@ -57,6 +60,7 @@ class WorkoutViewModel(
         val startIntent = Intent(context, WorkoutService::class.java).apply {
             action = WorkoutService.ACTION_START
             putExtra(WorkoutService.EXTRA_ROUTE_ID, routeId)
+            putExtra(WorkoutService.EXTRA_ACTIVITY_TYPE, activityType.name)
         }
         context.startForegroundService(startIntent)
         context.bindService(
@@ -80,10 +84,18 @@ class WorkoutViewModel(
     }
 
     companion object {
-        fun factory(routeId: String, context: Context): ViewModelProvider.Factory =
+        fun factory(
+            routeId: String,
+            activityType: ActivityType,
+            context: Context
+        ): ViewModelProvider.Factory =
             viewModelFactory {
                 initializer {
-                    WorkoutViewModel(routeId = routeId, context = context.applicationContext)
+                    WorkoutViewModel(
+                        routeId = routeId,
+                        activityType = activityType,
+                        context = context.applicationContext
+                    )
                 }
             }
     }

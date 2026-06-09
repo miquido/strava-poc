@@ -11,13 +11,13 @@ import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.Wearable
 import com.miquido.stravapoc.core.architecture.mvi.MviDefaultConfig
 import com.miquido.stravapoc.core.architecture.mvi.MviViewModel
+import com.miquido.stravapoc.library.data.model.ActivityType
 import com.miquido.stravapoc.library.data.model.Route
-import com.miquido.stravapoc.wear.data.local.ReceivedRouteEntity
 import com.miquido.stravapoc.wear.data.local.WearDatabase
+import com.miquido.stravapoc.wear.data.repository.toWearEntity
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 
-private const val DEFAULT_ROUTE_ID = "warsaw_lazienki"
 private const val TAG = "ActivitySelectionVM"
 
 class ActivitySelectionViewModel(
@@ -25,33 +25,33 @@ class ActivitySelectionViewModel(
     private val appContext: Context
 ) : MviViewModel<ActivitySelectionViewState>(ActivitySelectionViewState(), MviDefaultConfig()) {
 
-    private val dao = WearDatabase.getInstance(appContext).receivedRouteDao()
+    private val dao = WearDatabase.getInstance(appContext).wearRouteDao()
 
     private val dataListener = DataClient.OnDataChangedListener { events ->
         events
             .filter { it.dataItem.uri.path == "/route/selected" }
             .forEach { event ->
+                val uri = event.dataItem.uri
                 val json = DataMapItem.fromDataItem(event.dataItem)
                     .dataMap
                     .getString("route_json") ?: return@forEach
                 Log.d(TAG, "KUBAS route received via foreground DataClient listener")
-                saveToRoomAndApply(json)
+                saveToRoomAndApply(json, uri)
             }
     }
 
     init {
         dataClient.addListener(dataListener)
-        observeRouteFromDb()
+        loadMostRecentRouteFromDb()
         checkExistingDataLayerItems()
     }
 
-    private fun observeRouteFromDb() {
+    private fun loadMostRecentRouteFromDb() {
         viewModelScope.launch {
-            dao.observeRoute().collect { entity ->
-                if (entity != null) {
-                    Log.d(TAG, "KUBAS route loaded from Room: ${entity.routeJson.take(50)}")
-                    applyRouteJson(entity.routeJson)
-                }
+            val entity = dao.getAll().firstOrNull()
+            if (entity != null) {
+                Log.d(TAG, "KUBAS route loaded from Room: ${entity.name}")
+                transform { copy(receivedRouteId = entity.id, receivedRouteName = entity.name) }
             }
         }
     }
@@ -60,32 +60,31 @@ class ActivitySelectionViewModel(
         dataClient.dataItems.addOnSuccessListener { items ->
             items.filter { it.uri.path == "/route/selected" }
                 .forEach { item ->
+                    val uri = item.uri
                     val json = DataMapItem.fromDataItem(item)
                         .dataMap
                         .getString("route_json") ?: return@forEach
                     Log.d(TAG, "KUBAS route found in existing DataLayer items")
-                    saveToRoomAndApply(json)
+                    saveToRoomAndApply(json, uri)
                 }
             items.release()
         }
     }
 
-    private fun saveToRoomAndApply(json: String) {
-        viewModelScope.launch {
-            dao.saveRoute(ReceivedRouteEntity(routeJson = json))
-        }
-        applyRouteJson(json)
-    }
-
-    private fun applyRouteJson(json: String) {
+    private fun saveToRoomAndApply(json: String, uri: android.net.Uri) {
         val route = runCatching { Json.decodeFromString<Route>(json) }
             .getOrNull() ?: return
+        viewModelScope.launch {
+            dao.insert(route.toWearEntity())
+            // Usuń data item po zapisaniu — bez tego Data Layer dostarcza go ponownie
+            // przy każdym starcie aplikacji (checkExistingDataLayerItems) lub reinstalacji.
+            dataClient.deleteDataItems(uri)
+        }
         transform { copy(receivedRouteId = route.id, receivedRouteName = route.name) }
     }
 
-    fun onActivitySelected(activityId: String) = launch {
-        val routeId = viewState.value.receivedRouteId ?: DEFAULT_ROUTE_ID
-        emitSideEffect(ActivitySelectionSideEffect.NavigateToWorkout(activityId, routeId))
+    fun onActivitySelected(activity: ActivityType) = launch {
+        emitSideEffect(ActivitySelectionSideEffect.NavigateToRouteList(activity))
     }
 
     override fun onCleared() {
