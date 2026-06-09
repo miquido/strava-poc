@@ -22,10 +22,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.miquido.stravapoc.R
 import com.miquido.stravapoc.library.data.model.ActivityType
 import kotlinx.coroutines.flow.filterIsInstance
 
@@ -94,19 +92,18 @@ internal fun ActivityTypeCard(
                 tint = MaterialTheme.colorScheme.primary
             )
             Text(
-                text = stringResource(activityType.displayNameRes),
+                text = activityType.toDisplayName(),
                 style = MaterialTheme.typography.titleLarge
             )
         }
     }
 }
 
-internal val ActivityType.displayNameRes: Int
-    get() = when (this) {
-        ActivityType.RUNNING -> R.string.activity_running
-        ActivityType.CYCLING -> R.string.activity_cycling
-        ActivityType.WALKING -> R.string.activity_walking
-    }
+internal fun ActivityType.toDisplayName(): String = when (this) {
+    ActivityType.RUNNING -> "Running"
+    ActivityType.CYCLING -> "Cycling"
+    ActivityType.WALKING -> "Walking"
+}
 
 internal val ActivityType.icon: ImageVector
     get() = when (this) {

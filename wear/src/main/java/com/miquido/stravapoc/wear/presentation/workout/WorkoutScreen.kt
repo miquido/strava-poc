@@ -50,7 +50,7 @@ fun WorkoutScreen(
             when (effect) {
                 is WorkoutSideEffect.NavigateToSummary ->
                     onNavigateToSummary(effect.routeId, effect.distanceKm, effect.durationSecs, effect.laps)
-                is WorkoutSideEffect.ShowError -> { /* błąd ładowania — można pokazać dialog */ }
+                is WorkoutSideEffect.ShowError -> { }
             }
         }
     }
@@ -112,13 +112,10 @@ private fun WorkoutPager(
     val scope = rememberCoroutineScope()
     val focusRequester = remember { FocusRequester() }
 
-    // Przechwytuje obroty koronki i tłumaczy je na zmianę strony pagera.
-    // Koronka to "przycisk fizyczny" Wear OS — obrót w prawo → mapa, w lewo → metryki.
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
     }
 
-    // Wskaźnik stron (dwie kropki na dole ekranu) — pokazuje na której stronie jesteś.
     val pageIndicatorState = remember {
         object : PageIndicatorState {
             override val pageOffset: Float get() = pagerState.currentPageOffsetFraction
@@ -135,8 +132,6 @@ private fun WorkoutPager(
                 .focusRequester(focusRequester)
                 .focusable()
                 .onRotaryScrollEvent { event ->
-                    // Obrót koronki w górę/prawo → następna strona (mapa)
-                    // Obrót koronki w dół/lewo → poprzednia strona (metryki)
                     val delta = event.verticalScrollPixels
                     if (delta > 0f) {
                         scope.launch {
@@ -149,8 +144,6 @@ private fun WorkoutPager(
                     }
                     true
                 },
-            // Na stronie z mapą wyłącz swipe pagera — mapa obsługuje gesty sama.
-            // settledPage zapobiega wyłączeniu podczas animacji przejścia.
             userScrollEnabled = pagerState.settledPage == 0
         ) { page ->
             when (page) {

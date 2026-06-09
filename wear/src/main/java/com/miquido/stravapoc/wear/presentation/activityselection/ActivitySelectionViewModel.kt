@@ -35,7 +35,7 @@ class ActivitySelectionViewModel(
                 val json = DataMapItem.fromDataItem(event.dataItem)
                     .dataMap
                     .getString("route_json") ?: return@forEach
-                Log.d(TAG, "KUBAS route received via foreground DataClient listener")
+                Log.d(TAG, "route received via foreground DataClient listener")
                 saveToRoomAndApply(json, uri)
             }
     }
@@ -50,7 +50,7 @@ class ActivitySelectionViewModel(
         viewModelScope.launch {
             val entity = dao.getAll().firstOrNull()
             if (entity != null) {
-                Log.d(TAG, "KUBAS route loaded from Room: ${entity.name}")
+                Log.d(TAG, "route loaded from Room: ${entity.name}")
                 transform { copy(receivedRouteId = entity.id, receivedRouteName = entity.name) }
             }
         }
@@ -64,7 +64,7 @@ class ActivitySelectionViewModel(
                     val json = DataMapItem.fromDataItem(item)
                         .dataMap
                         .getString("route_json") ?: return@forEach
-                    Log.d(TAG, "KUBAS route found in existing DataLayer items")
+                    Log.d(TAG, "route found in existing DataLayer items")
                     saveToRoomAndApply(json, uri)
                 }
             items.release()
@@ -76,8 +76,6 @@ class ActivitySelectionViewModel(
             .getOrNull() ?: return
         viewModelScope.launch {
             dao.insert(route.toWearEntity())
-            // Usuń data item po zapisaniu — bez tego Data Layer dostarcza go ponownie
-            // przy każdym starcie aplikacji (checkExistingDataLayerItems) lub reinstalacji.
             dataClient.deleteDataItems(uri)
         }
         transform { copy(receivedRouteId = route.id, receivedRouteName = route.name) }

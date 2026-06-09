@@ -13,9 +13,6 @@ import kotlinx.serialization.json.Json
 
 class WorkoutResultSender(private val context: Context) {
 
-    /**
-     * Returns true if result was sent immediately, false if it was saved locally for later retry.
-     */
     suspend fun sendResult(result: WorkoutResult): Boolean {
         val json = Json.encodeToString(result)
         return if (trySendJson(json)) {

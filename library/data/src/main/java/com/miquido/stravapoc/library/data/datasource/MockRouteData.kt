@@ -5,7 +5,6 @@ import com.miquido.stravapoc.library.data.model.Route
 import com.miquido.stravapoc.library.data.model.RoutePoint
 
 val mockRoutes: List<Route> = listOf(
-    // ── RUNNING ──────────────────────────────────────────────────────────────
     Route(
         id = "ocean_trails_reserve",
         name = "Ocean Trails Reserve",
@@ -191,7 +190,6 @@ val mockRoutes: List<Route> = listOf(
             RoutePoint(37.61421, -119.07660)
         )
     ),
-    // ── CYCLING ──────────────────────────────────────────────────────────────
     Route(
         id = "yosemite_bike_loop",
         name = "Yosemite Valley Bike Loop",
@@ -430,7 +428,6 @@ val mockRoutes: List<Route> = listOf(
             RoutePoint(39.57417, -106.0789)
         )
     ),
-    // ── WALKING ──────────────────────────────────────────────────────────────
     Route(
         id = "the_narrows",
         name = "The Narrows — Zion",

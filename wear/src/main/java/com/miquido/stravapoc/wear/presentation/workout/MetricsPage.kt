@@ -36,7 +36,6 @@ fun MetricsPage(
         autoCentering = null,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        // --- PRIORYTET 1: Czas (największy) ---
         item {
             val timeColor = if (isPaused) Color.White.copy(alpha = 0.45f) else Color.White
             MetricItemPrimary(
@@ -46,7 +45,6 @@ fun MetricsPage(
             )
         }
 
-        // --- PRIORYTET 2: Dystans + Tempo obok siebie ---
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -65,7 +63,6 @@ fun MetricsPage(
             }
         }
 
-        // --- PRIORYTET 3: Okrążenie (dyskretne) ---
         item {
             Text(
                 text = "Lap ${state.lapNumber}  ·  ${"%.2f".format(state.lapDistanceKm)} km",
@@ -74,7 +71,6 @@ fun MetricsPage(
             )
         }
 
-        // --- Przyciski (pionowo, jeden pod drugim, 75% szerokości) ---
         item {
             Button(
                 onClick = onPauseResume,
@@ -119,7 +115,6 @@ fun MetricsPage(
     }
 }
 
-/** Duży — czas; dominuje wizualnie na ekranie */
 @Composable
 private fun MetricItemPrimary(
     label: String,
@@ -143,7 +138,6 @@ private fun MetricItemPrimary(
     }
 }
 
-/** Średni — dystans i tempo */
 @Composable
 private fun MetricItemSecondary(label: String, value: String, unit: String = "") {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {

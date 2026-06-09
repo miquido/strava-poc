@@ -13,10 +13,6 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 
-/**
- * Czyta rzeczywiste dane GPS z FusedLocationProviderClient.
- * Wymaga uprawnienia ACCESS_FINE_LOCATION — sprawdź przed użyciem.
- */
 class RealLocationSource(private val context: Context) : LocationSource {
 
     @SuppressLint("MissingPermission")
@@ -30,9 +26,6 @@ class RealLocationSource(private val context: Context) : LocationSource {
         val callback = object : LocationCallback() {
             override fun onLocationResult(result: LocationResult) {
                 val loc = result.lastLocation ?: return
-                // Reject inaccurate fixes (GPS not yet locked, network/WiFi location).
-                // Real GPS during movement typically reports 15-40m accuracy.
-                // Network/WiFi location reports 50-500m — those we reject.
                 if (!loc.hasAccuracy() || loc.accuracy > 50f) return
                 trySend(RoutePoint(lat = loc.latitude, lng = loc.longitude))
             }

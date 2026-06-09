@@ -72,7 +72,6 @@ fun WearRouteListScreen(
             }
         }
 
-        // Custom Activity — zawsze widoczny, niezależnie od stanu ładowania
         item {
             Chip(
                 modifier = Modifier.fillMaxWidth(),

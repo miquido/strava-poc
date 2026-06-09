@@ -55,8 +55,6 @@ import java.util.Locale
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.launch
 
-// ─── Route ───────────────────────────────────────────────────────────────────
-
 @Composable
 internal fun HistoryRoute(
     onNavigateToDetail: (Long) -> Unit,
@@ -78,8 +76,6 @@ internal fun HistoryRoute(
         onItemDeleted = viewModel::onDeleteItem
     )
 }
-
-// ─── Screen ──────────────────────────────────────────────────────────────────
 
 @Composable
 private fun HistoryScreen(
@@ -151,12 +147,6 @@ private fun HistoryScreen(
     }
 }
 
-// ─── SwipeToReveal ───────────────────────────────────────────────────────────
-
-/**
- * Swipe left by up to [peekPx] px. Snaps to [peekPx] when drag exceeds 40% threshold.
- * Stays at peek position until [isPeeked] is set to false externally (e.g. dialog cancel).
- */
 @Composable
 private fun SwipeToReveal(
     peekPx: Float,
@@ -167,7 +157,6 @@ private fun SwipeToReveal(
     val scope = rememberCoroutineScope()
     val animatable = remember { Animatable(0f) }
 
-    // Animate back to 0 when dialog is dismissed
     LaunchedEffect(isPeeked) {
         if (!isPeeked) {
             animatable.animateTo(
@@ -179,7 +168,6 @@ private fun SwipeToReveal(
 
     Box(modifier = Modifier.fillMaxWidth()) {
 
-        // Background: red + trash icon
         Box(
             modifier = Modifier
                 .matchParentSize()
@@ -194,7 +182,6 @@ private fun SwipeToReveal(
             )
         }
 
-        // Foreground: card, draggable
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -205,14 +192,12 @@ private fun SwipeToReveal(
                         onDragEnd = {
                             scope.launch {
                                 if (animatable.value < -peekPx * 0.4f) {
-                                    // Snap to peek position, then trigger dialog
                                     animatable.animateTo(
                                         targetValue = -peekPx,
                                         animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)
                                     )
                                     onRevealed()
                                 } else {
-                                    // Not far enough — snap back
                                     animatable.animateTo(
                                         targetValue = 0f,
                                         animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)
@@ -239,8 +224,6 @@ private fun SwipeToReveal(
         }
     }
 }
-
-// ─── HistoryItem ─────────────────────────────────────────────────────────────
 
 @Composable
 private fun HistoryItem(item: WorkoutResult, onClick: () -> Unit) {
@@ -310,8 +293,6 @@ private fun MetricLabel(value: String, label: String) {
         )
     }
 }
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 private fun formatDate(timestamp: Long): String =
     SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(Date(timestamp))

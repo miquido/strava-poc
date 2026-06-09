@@ -115,11 +115,9 @@ private fun HistoryDetailScreen(
                             uiSettings = MapUiSettings(zoomControlsEnabled = false),
                             properties = MapProperties(mapType = MapType.TERRAIN)
                         ) {
-                            // Predefined route (blue) — only shown when no tracked GPS data
                             if (trackedLatLngs.size < 2 && routePoints.size >= 2) {
                                 Polyline(points = routePoints, color = androidx.compose.ui.graphics.Color.Blue, width = 8f)
                             }
-                            // Tracked GPS route (red)
                             if (trackedLatLngs.size >= 2) {
                                 Polyline(points = trackedLatLngs, color = androidx.compose.ui.graphics.Color(0xFFFC4C02), width = 8f)
                             }

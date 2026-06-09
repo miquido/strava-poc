@@ -13,7 +13,6 @@ data class ActivitySelectionViewState(
     val receivedRouteName: String? = null
 )
 
-// Display helpers for Wear OS
 internal val ActivityType.wearLabel: String
     get() = when (this) {
         ActivityType.RUNNING -> "Running"

@@ -50,8 +50,6 @@ class RouteReceiver : WearableListenerService() {
             WearDatabase.getInstance(applicationContext)
                 .wearRouteDao()
                 .insert(route.toWearEntity())
-            // Usuń data item po zapisaniu — putDataItem() tworzy trwały stan w Data Layer,
-            // który jest dostarczany ponownie przy każdej reinstalacji aplikacji.
             Wearable.getDataClient(applicationContext).deleteDataItems(uri).await()
         }
     }

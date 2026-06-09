@@ -47,7 +47,6 @@ fun WorkoutSummaryScreen(
     var isSaving by remember { mutableStateOf(false) }
     var snackbarText by remember { mutableStateOf<String?>(null) }
 
-    // Auto-navigate after the snackbar has been visible for 3 seconds
     LaunchedEffect(snackbarText) {
         if (snackbarText != null) {
             delay(3000L)
@@ -137,7 +136,6 @@ fun WorkoutSummaryScreen(
                 }
             }
 
-            // Snackbar-style toast at the bottom
             AnimatedVisibility(
                 visible = snackbarText != null,
                 enter = fadeIn(),

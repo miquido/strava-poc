@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -35,28 +34,19 @@ class MainActivity : ComponentActivity() {
 
     private val isAmbient = mutableStateOf(false)
 
-    // Callback musi być polem klasy — AmbientController trzyma do niego referencję
-    // przez cały czas życia Activity i nie może być garbage-collected.
     private val ambientCallback = object : AmbientLifecycleObserver.AmbientLifecycleCallback {
         override fun onEnterAmbient(ambientDetails: AmbientLifecycleObserver.AmbientDetails) {
-            Log.d(TAG, "onEnterAmbient: burnIn=${ambientDetails.burnInProtectionRequired}")
             isAmbient.value = true
         }
 
         override fun onExitAmbient() {
-            Log.d(TAG, "onExitAmbient")
             isAmbient.value = false
         }
 
-        // Wywoływany co ~1 minutę w ambient mode — Wear OS wymaga tej metody
-        // nawet jeśli nic tu nie robisz; jej brak może sprawić, że system pominie
-        // wejście w ambient i wyłączy ekran całkowicie.
         override fun onUpdateAmbient() {
-            Log.d(TAG, "onUpdateAmbient")
         }
     }
 
-    // Observer jako pole klasy gwarantuje jego przeżywalność przez cały cykl życia.
     private lateinit var ambientObserver: AmbientLifecycleObserver
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -93,9 +83,6 @@ class MainActivity : ComponentActivity() {
 
             val navController = rememberSwipeDismissableNavController()
 
-            // Jeśli trening jest w toku — startujemy bezpośrednio na ekranie treningu.
-            // ActivityType nie jest zapisany w WorkoutPreferences — serwis odczyta go z trasy
-            // lub użyje domyślnego RUNNING. Dla custom routes to ograniczenie zaakceptowane.
             val activeRouteId = remember { WorkoutPreferences.getActiveRouteId(context) }
             val startDestination = remember {
                 if (activeRouteId != null) "workout/$activeRouteId/RUNNING" else "activity_selection"

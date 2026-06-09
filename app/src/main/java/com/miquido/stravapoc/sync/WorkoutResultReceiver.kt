@@ -52,10 +52,6 @@ class WorkoutResultReceiver : WearableListenerService() {
                 scope.launch {
                     saveWorkoutResultUseCase(enriched)
                     showNotification(enriched)
-                    // Usuń data item z Data Layer po zapisaniu — putDataItem() tworzy
-                    // trwały stan synchronizowany między urządzeniami. Bez usunięcia
-                    // item pozostaje w Data Layer i jest dostarczany ponownie przy
-                    // każdej reinstalacji / ponownej rejestracji WearableListenerService.
                     Wearable.getDataClient(this@WorkoutResultReceiver)
                         .deleteDataItems(uri)
                         .await()

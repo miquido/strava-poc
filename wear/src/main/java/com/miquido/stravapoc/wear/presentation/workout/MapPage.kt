@@ -84,7 +84,6 @@ fun MapPage(
             }
         }
 
-        // Przycisk powrotu do metryk — lewa strona, środek ekranu
         Box(
             modifier = Modifier
                 .align(Alignment.CenterStart)

@@ -12,9 +12,7 @@ sealed class WorkoutViewState {
         val lapNumber: Int = 1,
         val lapDistanceKm: Double = 0.0,
         val routePoints: List<RoutePoint> = emptyList(),
-        /** Bieżąca pozycja GPS (mock lub rzeczywista). Null przed pierwszą emisją. */
         val currentLocation: RoutePoint? = null,
-        /** Nagrany ślad — punkty GPS kolejno odwiedzone podczas treningu. */
         val trackedPoints: List<RoutePoint> = emptyList()
     ) : WorkoutViewState()
 

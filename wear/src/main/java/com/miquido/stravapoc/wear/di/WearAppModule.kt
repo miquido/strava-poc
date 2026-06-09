@@ -18,7 +18,6 @@ object WearAppModule {
     lateinit var getRoutesUseCase: GetRoutesUseCase
         private set
 
-    /** Buffer for tracked GPS points between WorkoutService.finish() and MainActivity.onSave() */
     var pendingTrackedPoints: List<RoutePoint> = emptyList()
 
     fun init(context: Context) {

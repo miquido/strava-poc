@@ -56,10 +56,6 @@ class WorkoutService : Service() {
     private val _state = MutableStateFlow<WorkoutViewState>(WorkoutViewState.Idle)
     val state: StateFlow<WorkoutViewState> = _state.asStateFlow()
 
-    // Ostatni punkt GPS od którego liczymy przyrost dystansu.
-    // Celowo NIE jest częścią WorkoutViewState — to wewnętrzny baseline serwisu.
-    // currentLocation w stanie jest zawsze aktualizowany (dla mapy), natomiast
-    // distanceBaseLocation aktualizujemy TYLKO gdy ruch przekroczy próg jitteru.
     private var distanceBaseLocation: RoutePoint? = null
     private var currentActivityType: ActivityType = ActivityType.RUNNING
 
@@ -75,8 +71,6 @@ class WorkoutService : Service() {
         val routeId = intent?.getStringExtra(EXTRA_ROUTE_ID)
         Log.d(TAG, "onStartCommand routeId=$routeId state=${_state.value::class.simpleName}")
         if (routeId != null && routeId.isNotEmpty() && _state.value is WorkoutViewState.Idle) {
-            // Odczytaj ActivityType z Intentu — dla predefinowanych tras zostanie nadpisany
-            // przez route.activityType po załadowaniu trasy w launchWorkout().
             val activityTypeName = intent.getStringExtra(EXTRA_ACTIVITY_TYPE)
             currentActivityType = activityTypeName
                 ?.let { runCatching { ActivityType.valueOf(it) }.getOrNull() }
@@ -93,7 +87,6 @@ class WorkoutService : Service() {
     private fun launchWorkout(routeId: String) {
         serviceScope.launch {
             if (routeId == CUSTOM_ROUTE_ID) {
-                // Custom Activity — brak trasy, prawdziwy GPS
                 val activeState = WorkoutViewState.Active(routePoints = emptyList())
                 _state.value = activeState
                 wakeLock.acquire(4 * 60 * 60 * 1000L)
@@ -103,7 +96,6 @@ class WorkoutService : Service() {
             } else {
                 WearAppModule.getRouteByIdUseCase(routeId)
                     .onSuccess { route ->
-                        // Trasa zna swój typ aktywności — nadpisz to co przyszło z Intentu
                         currentActivityType = route.activityType
                         distanceBaseLocation = null
                         val activeState = WorkoutViewState.Active(routePoints = route.points)
@@ -126,10 +118,6 @@ class WorkoutService : Service() {
         }
     }
 
-    /**
-     * Uruchamia odpowiednie źródło lokalizacji (mock lub rzeczywisty GPS).
-     * Każda emisja punktu GPS wywołuje updateFromLocation().
-     */
     private fun startLocationUpdates(
         routeId: String,
         initialProgressKm: Double,
@@ -156,33 +144,15 @@ class WorkoutService : Service() {
         }
     }
 
-    /**
-     * Aktualizuje stan po odebraniu nowego punktu GPS.
-     *
-     * Kluczowe rozróżnienie:
-     * - [distanceBaseLocation] — ostatni *zaakceptowany* punkt (aktualizowany tylko gdy
-     *   ruch > jitter). Służy wyłącznie do obliczania przyrostu dystansu.
-     * - [WorkoutViewState.Active.currentLocation] — zawsze najnowsza pozycja GPS.
-     *   Używana przez mapę i marker pozycji.
-     *
-     * Dzięki temu wolne aktywności (chód ~1.4 m/s, bieg ~2.8 m/s) poprawnie akumulują
-     * dystans — każda delta jest liczona od OSTATNIO ZAAKCEPTOWANEGO punktu, a nie od
-     * zawsze-aktualnego currentLocation.
-     */
     private fun updateFromLocation(point: RoutePoint) {
         _state.update { current ->
             val active = current as? WorkoutViewState.Active ?: return@update current
             val constraints = currentActivityType.trackingConstraints
 
             val delta = distanceBaseLocation?.let { haversineDistanceKm(it, point) } ?: 0.0
-            // Odrzuć NaN/Infinity i teleportację GPS (> maxDeltaKm na update)
             if (delta.isNaN() || delta.isInfinite() || delta > constraints.maxDeltaKm) return@update current
 
             val effectiveDelta = if (delta < constraints.jitterKm) 0.0 else delta
-            // Przesuń bazę tylko gdy ruch jest istotny — małe ruchy akumulują się
-            // do następnego zaakceptowanego punktu zamiast być bezpowrotnie zerowane.
-            // Przy pierwszym punkcie (null): ustaw bazę bez liczenia dystansu.
-            // Przy kolejnych: przesuń bazę tylko gdy ruch > próg jitteru.
             if (distanceBaseLocation == null || effectiveDelta > 0.0) {
                 distanceBaseLocation = point
             }
@@ -192,7 +162,7 @@ class WorkoutService : Service() {
                 distanceKm = newDistance,
                 lapDistanceKm = active.lapDistanceKm + effectiveDelta,
                 pacePerKm = formatPace(newDistance, active.elapsedSeconds),
-                currentLocation = point,          // zawsze aktualizuj — dla mapy
+                currentLocation = point,
                 trackedPoints = active.trackedPoints + point
             )
         }
@@ -208,7 +178,6 @@ class WorkoutService : Service() {
 
     fun resume() {
         val paused = _state.value as? WorkoutViewState.Paused ?: return
-        // Przywróć bazę dystansu do ostatniej pozycji GPS z przed pauzy
         distanceBaseLocation = paused.snapshot.currentLocation
         _state.value = paused.snapshot
         startTimer()
@@ -232,7 +201,6 @@ class WorkoutService : Service() {
             ?: (_state.value as? WorkoutViewState.Paused)?.snapshot
             ?: return
 
-        // Decimate to max 2000 points to stay within Data Layer 100 KB limit (~30 B/point JSON)
         val raw = active.trackedPoints
         val step = maxOf(1, raw.size / 2000)
         WearAppModule.pendingTrackedPoints = raw.filterIndexed { i, _ -> i % step == 0 }
@@ -380,7 +348,6 @@ class WorkoutService : Service() {
         const val ACTION_START = "com.miquido.stravapoc.WORKOUT_START"
         const val EXTRA_ROUTE_ID = "extra_route_id"
         const val EXTRA_ACTIVITY_TYPE = "extra_activity_type"
-        /** Sentinel routeId meaning "no specific route — custom activity". */
         const val CUSTOM_ROUTE_ID = "_custom_"
         private const val CHANNEL_ID = "workout_channel_v2"
         private const val NOTIFICATION_ID = 2001
