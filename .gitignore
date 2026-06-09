@@ -15,8 +15,7 @@ local.properties
 # -------------------------------------------------------------------------
 # Pliki budowania (Kompilacja i Build)
 # -------------------------------------------------------------------------
-/build/
-*/build/
+**/build/
 captures/
 .externalNativeBuild/
 .cxx/
