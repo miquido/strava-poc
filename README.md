@@ -2,6 +2,33 @@
 
 Android proof-of-concept inspired by Strava — a two-app system where a Wear OS watch records GPS workouts and syncs the results to a companion phone app.
 
+**Phone**
+<p>
+  <img src="docs/screenshots/phone_activity_type.png" width="22%" />
+  &nbsp;
+  <img src="docs/screenshots/phone_route_detail.png" width="22%" />
+  &nbsp;
+  <img src="docs/screenshots/phone_history.png" width="22%" />
+  &nbsp;
+  <img src="docs/screenshots/phone_history_detail.png" width="22%" />
+</p>
+
+**Wear OS**
+<p>
+  <img src="docs/screenshots/wear_activity_selection.png" width="19%" />
+  &nbsp;
+  <img src="docs/screenshots/wear_route_list.png" width="19%" />
+  &nbsp;
+  <img src="docs/screenshots/wear_workout_metrics.png" width="19%" />
+  &nbsp;
+  <img src="docs/screenshots/wear_map_route.png" width="19%" />
+  &nbsp;
+  <img src="docs/screenshots/wear_map_tracking.png" width="19%" />
+</p>
+<p>
+  <img src="docs/screenshots/wear_summary.png" width="19%" />
+</p>
+
 ---
 
 ## Table of Contents
