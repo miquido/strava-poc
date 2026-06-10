@@ -7,5 +7,4 @@ sealed class WorkoutSideEffect {
         val durationSecs: Long,
         val laps: Int
     ) : WorkoutSideEffect()
-    data class ShowError(val message: String) : WorkoutSideEffect()
 }

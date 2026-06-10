@@ -1,6 +1,5 @@
 package com.miquido.stravapoc.wear.presentation.workout
 
-import android.app.Application
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
@@ -19,29 +18,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.rotary.onRotaryScrollEvent
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.wear.compose.material.HorizontalPageIndicator
 import androidx.wear.compose.material.PageIndicatorState
 import androidx.wear.compose.material.Text
-import com.miquido.stravapoc.library.data.model.ActivityType
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun WorkoutScreen(
-    routeId: String,
-    activityType: ActivityType,
     isAmbient: Boolean = false,
     onNavigateToSummary: (routeId: String, distanceKm: Double, durationSecs: Long, laps: Int) -> Unit,
-    viewModel: WorkoutViewModel = viewModel(
-        factory = WorkoutViewModel.factory(
-            routeId,
-            activityType,
-            LocalContext.current.applicationContext as Application
-        )
-    )
+    viewModel: WorkoutViewModel = hiltViewModel()
 ) {
     val state by viewModel.viewState.collectAsState()
 
@@ -50,7 +39,6 @@ fun WorkoutScreen(
             when (effect) {
                 is WorkoutSideEffect.NavigateToSummary ->
                     onNavigateToSummary(effect.routeId, effect.distanceKm, effect.durationSecs, effect.laps)
-                is WorkoutSideEffect.ShowError -> { }
             }
         }
     }

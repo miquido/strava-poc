@@ -35,19 +35,19 @@ import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.miquido.stravapoc.R
-import com.miquido.stravapoc.library.data.model.ActivityType
+import com.miquido.stravapoc.presentation.toDisplayNameRes
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 @Composable
-internal fun HistoryDetailRoute(
+internal fun HistoryDetailScreen(
     onBack: () -> Unit,
     viewModel: HistoryDetailViewModel = hiltViewModel()
 ) {
     val state by viewModel.viewState.collectAsState()
 
-    HistoryDetailScreen(
+    HistoryDetailContent(
         state = state,
         onBack = onBack
     )
@@ -55,32 +55,44 @@ internal fun HistoryDetailRoute(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun HistoryDetailScreen(
+private fun HistoryDetailContent(
     state: HistoryDetailViewState,
     onBack: () -> Unit
 ) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(state.entity?.routeName ?: stringResource(R.string.history_detail_fallback_title)) },
+                title = {
+                    Text(
+                        state.entity?.routeName
+                            ?: stringResource(R.string.history_detail_fallback_title)
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back))
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.cd_back)
+                        )
                     }
                 }
             )
         }
     ) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+        Box(modifier = Modifier
+            .fillMaxSize()
+            .padding(padding)) {
             when {
                 state.isLoading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                 state.error != null -> Text(
-                    text = state.error!!,
+                    text = state.error,
                     modifier = Modifier.align(Alignment.Center)
                 )
+
                 state.entity != null -> {
                     val entity = state.entity
-                    val routePoints = state.route?.points?.map { LatLng(it.lat, it.lng) } ?: emptyList()
+                    val routePoints =
+                        state.route?.points?.map { LatLng(it.lat, it.lng) } ?: emptyList()
                     val trackedLatLngs = state.trackedPoints.map { LatLng(it.lat, it.lng) }
                     val center = trackedLatLngs.firstOrNull()
                         ?: routePoints.firstOrNull()
@@ -101,7 +113,7 @@ private fun HistoryDetailScreen(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Text(
-                                text = entity.activityType.toDisplayName(),
+                                text = stringResource(entity.activityType.toDisplayNameRes()),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -116,10 +128,18 @@ private fun HistoryDetailScreen(
                             properties = MapProperties(mapType = MapType.TERRAIN)
                         ) {
                             if (trackedLatLngs.size < 2 && routePoints.size >= 2) {
-                                Polyline(points = routePoints, color = androidx.compose.ui.graphics.Color.Blue, width = 8f)
+                                Polyline(
+                                    points = routePoints,
+                                    color = androidx.compose.ui.graphics.Color.Blue,
+                                    width = 8f
+                                )
                             }
                             if (trackedLatLngs.size >= 2) {
-                                Polyline(points = trackedLatLngs, color = androidx.compose.ui.graphics.Color(0xFFFC4C02), width = 8f)
+                                Polyline(
+                                    points = trackedLatLngs,
+                                    color = androidx.compose.ui.graphics.Color(0xFFFC4C02),
+                                    width = 8f
+                                )
                             }
                         }
 
@@ -150,7 +170,10 @@ private fun HistoryDetailScreen(
                         ) {
                             MetricTile(
                                 label = stringResource(R.string.metric_pace),
-                                value = formatPace(entity.totalDistanceKm, entity.totalDurationSeconds),
+                                value = formatPace(
+                                    entity.totalDistanceKm,
+                                    entity.totalDurationSeconds
+                                ),
                                 unit = stringResource(R.string.unit_min_km),
                                 modifier = Modifier.weight(1f)
                             )
@@ -177,9 +200,21 @@ private fun MetricTile(
 ) {
     Card(modifier = modifier) {
         Column(modifier = Modifier.padding(14.dp)) {
-            Text(text = label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text(text = value, style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.primary)
-            Text(text = unit, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                text = value,
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Text(
+                text = unit,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }
@@ -202,8 +237,3 @@ private fun formatPace(distanceKm: Double, durationSeconds: Long): String {
     return "%d:%02d".format(m, s)
 }
 
-private fun ActivityType.toDisplayName(): String = when (this) {
-    ActivityType.RUNNING -> "Running"
-    ActivityType.CYCLING -> "Cycling"
-    ActivityType.WALKING -> "Walking"
-}

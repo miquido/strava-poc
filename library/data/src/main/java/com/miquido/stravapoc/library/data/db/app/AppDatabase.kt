@@ -1,4 +1,4 @@
-package com.miquido.stravapoc.library.data.db
+package com.miquido.stravapoc.library.data.db.app
 
 import android.content.Context
 import androidx.room.Database
@@ -6,8 +6,8 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
-import com.miquido.stravapoc.library.data.db.dao.WorkoutResultDao
-import com.miquido.stravapoc.library.data.db.entity.WorkoutResultEntity
+import com.miquido.stravapoc.library.data.db.app.dao.WorkoutResultDao
+import com.miquido.stravapoc.library.data.db.app.entity.WorkoutResultEntity
 
 @Database(entities = [WorkoutResultEntity::class], version = 2)
 internal abstract class AppDatabase : RoomDatabase() {

@@ -4,7 +4,6 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
-import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Binder
@@ -17,14 +16,15 @@ import androidx.wear.ongoing.OngoingActivity
 import androidx.wear.ongoing.Status
 import com.miquido.stravapoc.library.data.model.ActivityType
 import com.miquido.stravapoc.library.data.model.RoutePoint
+import com.miquido.stravapoc.library.usecase.GetWearRouteByIdUseCase
 import com.miquido.stravapoc.wear.R
 import com.miquido.stravapoc.wear.data.location.MockLocationSource
 import com.miquido.stravapoc.wear.data.location.RealLocationSource
 import com.miquido.stravapoc.wear.data.location.haversineDistanceKm
 import com.miquido.stravapoc.wear.data.location.trackingConstraints
-import com.miquido.stravapoc.wear.di.WearAppModule
 import com.miquido.stravapoc.wear.presentation.MainActivity
 import com.miquido.stravapoc.wear.presentation.workout.WorkoutViewState
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -37,8 +37,19 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class WorkoutService : Service() {
+
+    @Inject
+    lateinit var getRouteByIdUseCase: GetWearRouteByIdUseCase
+
+    @Inject
+    lateinit var workoutResultHolder: WorkoutResultHolder
+
+    @Inject
+    lateinit var workoutPreferences: WorkoutPreferences
 
     inner class LocalBinder : Binder() {
         fun getService(): WorkoutService = this@WorkoutService
@@ -48,7 +59,8 @@ class WorkoutService : Service() {
     private val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
         Log.e(TAG, "Unhandled exception in WorkoutService coroutine", throwable)
     }
-    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default + exceptionHandler)
+    private val serviceScope =
+        CoroutineScope(SupervisorJob() + Dispatchers.Default + exceptionHandler)
     private var timerJob: Job? = null
     private var locationJob: Job? = null
     private var currentRouteId: String = ""
@@ -60,7 +72,7 @@ class WorkoutService : Service() {
     private var currentActivityType: ActivityType = ActivityType.RUNNING
 
     private val wakeLock: PowerManager.WakeLock by lazy {
-        (getSystemService(Context.POWER_SERVICE) as PowerManager)
+        (getSystemService(POWER_SERVICE) as PowerManager)
             .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "StravaPoc::WorkoutWakeLock")
             .apply { setReferenceCounted(false) }
     }
@@ -77,7 +89,7 @@ class WorkoutService : Service() {
                 ?: ActivityType.RUNNING
             distanceBaseLocation = null
             currentRouteId = routeId
-            WorkoutPreferences.save(applicationContext, routeId)
+            workoutPreferences.save(routeId)
             startForegroundWithNotification()
             launchWorkout(routeId)
         }
@@ -94,7 +106,7 @@ class WorkoutService : Service() {
                 startLocationUpdates(routeId, initialProgressKm = 0.0, routePoints = emptyList())
                 updateNotification()
             } else {
-                WearAppModule.getRouteByIdUseCase(routeId)
+                getRouteByIdUseCase(routeId)
                     .onSuccess { route ->
                         currentActivityType = route.activityType
                         distanceBaseLocation = null
@@ -102,7 +114,11 @@ class WorkoutService : Service() {
                         _state.value = activeState
                         wakeLock.acquire(4 * 60 * 60 * 1000L)
                         startTimer()
-                        startLocationUpdates(routeId, initialProgressKm = 0.0, routePoints = route.points)
+                        startLocationUpdates(
+                            routeId,
+                            initialProgressKm = 0.0,
+                            routePoints = route.points
+                        )
                         updateNotification()
                     }
                     .onFailure { e ->
@@ -111,7 +127,11 @@ class WorkoutService : Service() {
                         _state.value = activeState
                         wakeLock.acquire(4 * 60 * 60 * 1000L)
                         startTimer()
-                        startLocationUpdates(routeId, initialProgressKm = 0.0, routePoints = emptyList())
+                        startLocationUpdates(
+                            routeId,
+                            initialProgressKm = 0.0,
+                            routePoints = emptyList()
+                        )
                         updateNotification()
                     }
             }
@@ -203,7 +223,7 @@ class WorkoutService : Service() {
 
         val raw = active.trackedPoints
         val step = maxOf(1, raw.size / 2000)
-        WearAppModule.pendingTrackedPoints = raw.filterIndexed { i, _ -> i % step == 0 }
+        workoutResultHolder.pendingTrackedPoints = raw.filterIndexed { i, _ -> i % step == 0 }
 
         _state.value = WorkoutViewState.Finished(
             totalDistanceKm = active.distanceKm,
@@ -212,7 +232,7 @@ class WorkoutService : Service() {
             routeId = currentRouteId
         )
 
-        WorkoutPreferences.clear(applicationContext)
+        workoutPreferences.clear()
         if (wakeLock.isHeld) wakeLock.release()
         ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
         stopSelf()
@@ -222,11 +242,13 @@ class WorkoutService : Service() {
         timerJob?.cancel()
         timerJob = serviceScope.launch {
             val active = _state.value as? WorkoutViewState.Active ?: return@launch
-            val startRealtime = android.os.SystemClock.elapsedRealtime() - (active.elapsedSeconds * 1000L)
+            val startRealtime =
+                android.os.SystemClock.elapsedRealtime() - (active.elapsedSeconds * 1000L)
 
             while (true) {
                 delay(1000)
-                val totalElapsedSeconds = (android.os.SystemClock.elapsedRealtime() - startRealtime) / 1000L
+                val totalElapsedSeconds =
+                    (android.os.SystemClock.elapsedRealtime() - startRealtime) / 1000L
                 _state.update { current ->
                     val a = current as? WorkoutViewState.Active ?: return@update current
                     a.copy(
@@ -339,7 +361,7 @@ class WorkoutService : Service() {
         locationJob?.cancel()
         serviceScope.cancel()
         if (wakeLock.isHeld) wakeLock.release()
-        WorkoutPreferences.clear(applicationContext)
+        workoutPreferences.clear()
         super.onDestroy()
     }
 
@@ -348,7 +370,6 @@ class WorkoutService : Service() {
         const val ACTION_START = "com.miquido.stravapoc.WORKOUT_START"
         const val EXTRA_ROUTE_ID = "extra_route_id"
         const val EXTRA_ACTIVITY_TYPE = "extra_activity_type"
-        const val CUSTOM_ROUTE_ID = "_custom_"
         private const val CHANNEL_ID = "workout_channel_v2"
         private const val NOTIFICATION_ID = 2001
     }

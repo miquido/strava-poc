@@ -1,6 +1,9 @@
 package com.miquido.stravapoc.wear.data.location
 
 import com.miquido.stravapoc.library.data.model.ActivityType
+import com.miquido.stravapoc.library.data.model.ActivityType.CYCLING
+import com.miquido.stravapoc.library.data.model.ActivityType.RUNNING
+import com.miquido.stravapoc.library.data.model.ActivityType.WALKING
 import com.miquido.stravapoc.library.data.model.RoutePoint
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -16,9 +19,9 @@ data class TrackingConstraints(
 
 val ActivityType.trackingConstraints: TrackingConstraints
     get() = when (this) {
-        ActivityType.WALKING -> TrackingConstraints(jitterKm = 0.003, maxDeltaKm = 0.10, mockSpeedKmh = 5.0)
-        ActivityType.RUNNING -> TrackingConstraints(jitterKm = 0.003, maxDeltaKm = 0.15, mockSpeedKmh = 10.0)
-        ActivityType.CYCLING -> TrackingConstraints(jitterKm = 0.005, maxDeltaKm = 0.25, mockSpeedKmh = 25.0)
+        WALKING -> TrackingConstraints(jitterKm = 0.003, maxDeltaKm = 0.10, mockSpeedKmh = 5.0)
+        RUNNING -> TrackingConstraints(jitterKm = 0.003, maxDeltaKm = 0.15, mockSpeedKmh = 10.0)
+        CYCLING -> TrackingConstraints(jitterKm = 0.005, maxDeltaKm = 0.25, mockSpeedKmh = 25.0)
     }
 
 fun haversineDistanceKm(p1: RoutePoint, p2: RoutePoint): Double {

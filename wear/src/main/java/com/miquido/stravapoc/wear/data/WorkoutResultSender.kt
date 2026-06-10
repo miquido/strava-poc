@@ -5,13 +5,16 @@ import android.util.Log
 import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
 import com.miquido.stravapoc.library.data.model.WorkoutResult
-import com.miquido.stravapoc.wear.data.local.PendingWorkoutResultEntity
-import com.miquido.stravapoc.wear.data.local.WearDatabase
+import com.miquido.stravapoc.library.data.db.wear.PendingWorkoutResultEntity
+import com.miquido.stravapoc.library.data.db.wear.PendingWorkoutResultLocalDataSource
 import kotlinx.coroutines.tasks.await
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
-class WorkoutResultSender(private val context: Context) {
+class WorkoutResultSender(
+    private val context: Context,
+    private val pendingDataSource: PendingWorkoutResultLocalDataSource,
+) {
 
     suspend fun sendResult(result: WorkoutResult): Boolean {
         val json = Json.encodeToString(result)
@@ -19,7 +22,7 @@ class WorkoutResultSender(private val context: Context) {
             true
         } else {
             Log.w(TAG, "Send failed — saving locally for retry")
-            WearDatabase.getInstance(context).pendingWorkoutResultDao().insert(
+            pendingDataSource.insert(
                 PendingWorkoutResultEntity(
                     workoutResultJson = json,
                     createdAt = System.currentTimeMillis()
@@ -30,13 +33,12 @@ class WorkoutResultSender(private val context: Context) {
     }
 
     suspend fun retrySendPending() {
-        val dao = WearDatabase.getInstance(context).pendingWorkoutResultDao()
-        val pending = dao.getAll()
+        val pending = pendingDataSource.getAll()
         if (pending.isEmpty()) return
         Log.d(TAG, "Retrying ${pending.size} pending workout result(s)")
         for (entity in pending) {
             if (trySendJson(entity.workoutResultJson)) {
-                dao.delete(entity)
+                pendingDataSource.delete(entity)
                 Log.d(TAG, "Pending result id=${entity.id} sent and removed")
             }
         }

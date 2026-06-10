@@ -6,6 +6,7 @@ import com.miquido.stravapoc.core.architecture.mvi.MviDefaultConfig
 import com.miquido.stravapoc.core.architecture.mvi.MviViewModel
 import com.miquido.stravapoc.library.usecase.GetRoutesUseCase
 import com.miquido.stravapoc.presentation.navigation.AppRoute
+import com.miquido.stravapoc.presentation.routelist.RouteListSideEffect.NavigateToDetail
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
@@ -30,6 +31,6 @@ internal class RouteListViewModel @Inject constructor(
     }
 
     fun onRouteSelected(routeId: String) = launch {
-        emitSideEffect(RouteListSideEffect.NavigateToDetail(routeId))
+        emitSideEffect(NavigateToDetail(routeId))
     }
 }

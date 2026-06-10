@@ -1,19 +1,19 @@
 package com.miquido.stravapoc.library.data.repository
 
-import com.miquido.stravapoc.library.data.db.dao.WorkoutResultDao
-import com.miquido.stravapoc.library.data.db.entity.toDomain
-import com.miquido.stravapoc.library.data.db.entity.toEntity
+import com.miquido.stravapoc.library.data.datasource.WorkoutResultLocalDataSource
+import com.miquido.stravapoc.library.data.db.app.entity.toDomain
+import com.miquido.stravapoc.library.data.db.app.entity.toEntity
 import com.miquido.stravapoc.library.data.model.WorkoutResult
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 internal class WorkoutResultRepositoryImpl @Inject constructor(
-    private val dao: WorkoutResultDao
+    private val dataSource: WorkoutResultLocalDataSource
 ) : WorkoutResultRepository {
     override fun getHistory(): Flow<List<WorkoutResult>> =
-        dao.getAllAsFlow().map { list -> list.map { it.toDomain() } }
-    override suspend fun getById(id: Long): WorkoutResult? = dao.getById(id)?.toDomain()
-    override suspend fun save(result: WorkoutResult): Long = dao.insert(result.toEntity())
-    override suspend fun delete(id: Long) = dao.deleteById(id)
+        dataSource.getAll().map { list -> list.map { it.toDomain() } }
+    override suspend fun getById(id: Long): WorkoutResult? = dataSource.getById(id)?.toDomain()
+    override suspend fun save(result: WorkoutResult): Long = dataSource.insert(result.toEntity())
+    override suspend fun delete(id: Long) = dataSource.deleteById(id)
 }

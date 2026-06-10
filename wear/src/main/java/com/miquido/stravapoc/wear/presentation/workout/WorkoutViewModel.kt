@@ -5,21 +5,25 @@ import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
 import android.os.IBinder
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.lifecycle.SavedStateHandle
 import com.miquido.stravapoc.core.architecture.mvi.MviDefaultConfig
 import com.miquido.stravapoc.core.architecture.mvi.MviViewModel
 import com.miquido.stravapoc.library.data.model.ActivityType
 import com.miquido.stravapoc.wear.data.WorkoutService
-import kotlinx.coroutines.launch
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
 
-class WorkoutViewModel(
-    private val routeId: String,
-    private val activityType: ActivityType,
-    private val context: Context,
+@HiltViewModel
+class WorkoutViewModel @Inject constructor(
+    savedStateHandle: SavedStateHandle,
+    @ApplicationContext private val context: Context,
 ) : MviViewModel<WorkoutViewState>(WorkoutViewState.Idle, MviDefaultConfig()) {
+
+    private val routeId: String = checkNotNull(savedStateHandle.get<String>("routeId"))
+    private val activityType: ActivityType = ActivityType.valueOf(
+        checkNotNull(savedStateHandle.get<String>("activityTypeName"))
+    )
 
     private var workoutService: WorkoutService? = null
     private var bound = false
@@ -29,7 +33,7 @@ class WorkoutViewModel(
             val service = (binder as WorkoutService.LocalBinder).getService()
             workoutService = service
             bound = true
-            viewModelScope.launch {
+            launch {
                 service.state.collect { serviceState ->
                     transform { serviceState }
                     if (serviceState is WorkoutViewState.Finished) {
@@ -81,22 +85,5 @@ class WorkoutViewModel(
             bound = false
         }
         super.onCleared()
-    }
-
-    companion object {
-        fun factory(
-            routeId: String,
-            activityType: ActivityType,
-            context: Context
-        ): ViewModelProvider.Factory =
-            viewModelFactory {
-                initializer {
-                    WorkoutViewModel(
-                        routeId = routeId,
-                        activityType = activityType,
-                        context = context.applicationContext
-                    )
-                }
-            }
     }
 }

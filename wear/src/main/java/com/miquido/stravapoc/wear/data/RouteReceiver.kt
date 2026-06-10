@@ -11,19 +11,24 @@ import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.Node
 import com.google.android.gms.wearable.Wearable
 import com.google.android.gms.wearable.WearableListenerService
-import kotlinx.coroutines.tasks.await
 import com.miquido.stravapoc.library.data.model.Route
-import com.miquido.stravapoc.wear.data.local.WearDatabase
-import com.miquido.stravapoc.wear.data.repository.toWearEntity
+import com.miquido.stravapoc.library.usecase.SaveWearRouteUseCase
 import com.miquido.stravapoc.wear.presentation.MainActivity
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import kotlinx.serialization.json.Json
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class RouteReceiver : WearableListenerService() {
+
+    @Inject lateinit var saveWearRouteUseCase: SaveWearRouteUseCase
+    @Inject lateinit var workoutResultSender: WorkoutResultSender
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -47,9 +52,7 @@ class RouteReceiver : WearableListenerService() {
 
     private fun saveRoute(route: Route, uri: android.net.Uri) {
         serviceScope.launch {
-            WearDatabase.getInstance(applicationContext)
-                .wearRouteDao()
-                .insert(route.toWearEntity())
+            saveWearRouteUseCase(route)
             Wearable.getDataClient(applicationContext).deleteDataItems(uri).await()
         }
     }
@@ -89,7 +92,7 @@ class RouteReceiver : WearableListenerService() {
         super.onPeerConnected(peer)
         Log.d(TAG, "Peer connected: ${peer.displayName} — retrying pending workout results")
         serviceScope.launch {
-            WorkoutResultSender(applicationContext).retrySendPending()
+            workoutResultSender.retrySendPending()
         }
     }
 

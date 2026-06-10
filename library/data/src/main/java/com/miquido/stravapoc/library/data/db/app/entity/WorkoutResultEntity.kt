@@ -1,4 +1,4 @@
-package com.miquido.stravapoc.library.data.db.entity
+package com.miquido.stravapoc.library.data.db.app.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

@@ -1,9 +1,9 @@
-package com.miquido.stravapoc.library.data.db.dao
+package com.miquido.stravapoc.library.data.db.app.dao
 
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
-import com.miquido.stravapoc.library.data.db.entity.WorkoutResultEntity
+import com.miquido.stravapoc.library.data.db.app.entity.WorkoutResultEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao

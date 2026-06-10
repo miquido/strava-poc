@@ -11,8 +11,8 @@ import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.Wearable
 import com.google.android.gms.wearable.WearableListenerService
 import com.miquido.stravapoc.MainActivity
-import com.miquido.stravapoc.library.data.datasource.RouteLocalDataSource
 import com.miquido.stravapoc.library.data.model.WorkoutResult
+import com.miquido.stravapoc.library.usecase.GetRouteByIdUseCase
 import com.miquido.stravapoc.library.usecase.SaveWorkoutResultUseCase
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -28,9 +28,9 @@ import javax.inject.Inject
 class WorkoutResultReceiver : WearableListenerService() {
 
     @Inject lateinit var saveWorkoutResultUseCase: SaveWorkoutResultUseCase
+    @Inject lateinit var getRouteByIdUseCase: GetRouteByIdUseCase
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    private val routeDataSource = RouteLocalDataSource()
 
     override fun onDataChanged(events: DataEventBuffer) {
         events
@@ -42,14 +42,13 @@ class WorkoutResultReceiver : WearableListenerService() {
                 val result = runCatching { Json.decodeFromString<WorkoutResult>(json) }
                     .getOrNull() ?: return@forEach
 
-                val route = routeDataSource.getRouteById(result.routeId)
-                val enriched = result.copy(
-                    routeName = route?.name ?: result.routeId,
-                    activityType = route?.activityType ?: result.activityType,
-                    timestamp = System.currentTimeMillis()
-                )
-
                 scope.launch {
+                    val route = getRouteByIdUseCase(result.routeId).getOrNull()
+                    val enriched = result.copy(
+                        routeName = route?.name ?: result.routeId,
+                        activityType = route?.activityType ?: result.activityType,
+                        timestamp = System.currentTimeMillis()
+                    )
                     saveWorkoutResultUseCase(enriched)
                     showNotification(enriched)
                     Wearable.getDataClient(this@WorkoutResultReceiver)

@@ -5,7 +5,7 @@ import com.miquido.stravapoc.library.data.model.ActivityType
 import com.miquido.stravapoc.library.data.model.Route
 import javax.inject.Inject
 
-internal class RouteRepositoryImpl @Inject constructor(
+class RouteRepositoryImpl @Inject constructor(
     private val dataSource: RouteLocalDataSource
 ) : RouteRepository {
 

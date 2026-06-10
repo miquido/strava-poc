@@ -22,9 +22,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.miquido.stravapoc.library.data.model.ActivityType
+import com.miquido.stravapoc.library.data.model.ActivityType.CYCLING
+import com.miquido.stravapoc.library.data.model.ActivityType.RUNNING
+import com.miquido.stravapoc.library.data.model.ActivityType.WALKING
+import com.miquido.stravapoc.presentation.toDisplayNameRes
+import com.miquido.stravapoc.presentation.activitytype.ActivityTypeSideEffect.NavigateToRouteList
 import kotlinx.coroutines.flow.filterIsInstance
 
 @Composable
@@ -38,7 +44,7 @@ internal fun ActivityTypeRoute(
     LaunchedEffect(viewModel) {
         viewModel.sideEffect.filterIsInstance<ActivityTypeSideEffect>().collect { effect ->
             when (effect) {
-                is ActivityTypeSideEffect.NavigateToRouteList -> onNavigateToRouteList(effect.activityType)
+                is NavigateToRouteList -> onNavigateToRouteList(effect.activityType)
             }
         }
     }
@@ -92,22 +98,16 @@ internal fun ActivityTypeCard(
                 tint = MaterialTheme.colorScheme.primary
             )
             Text(
-                text = activityType.toDisplayName(),
+                text = stringResource(activityType.toDisplayNameRes()),
                 style = MaterialTheme.typography.titleLarge
             )
         }
     }
 }
 
-internal fun ActivityType.toDisplayName(): String = when (this) {
-    ActivityType.RUNNING -> "Running"
-    ActivityType.CYCLING -> "Cycling"
-    ActivityType.WALKING -> "Walking"
-}
-
 internal val ActivityType.icon: ImageVector
     get() = when (this) {
-        ActivityType.RUNNING -> Icons.AutoMirrored.Filled.DirectionsRun
-        ActivityType.CYCLING -> Icons.Filled.PedalBike
-        ActivityType.WALKING -> Icons.AutoMirrored.Filled.DirectionsWalk
+        RUNNING -> Icons.AutoMirrored.Filled.DirectionsRun
+        CYCLING -> Icons.Filled.PedalBike
+        WALKING -> Icons.AutoMirrored.Filled.DirectionsWalk
     }

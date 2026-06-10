@@ -33,10 +33,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.miquido.stravapoc.R
 import com.miquido.stravapoc.library.data.model.ActivityType
 import com.miquido.stravapoc.library.data.model.Route
+import com.miquido.stravapoc.presentation.routelist.RouteListSideEffect.NavigateToDetail
 import kotlinx.coroutines.flow.filterIsInstance
 
 @Composable
-internal fun RouteListRoute(
+internal fun RouteListScreen(
     onBack: () -> Unit,
     onNavigateToDetail: (String) -> Unit,
     viewModel: RouteListViewModel = hiltViewModel()
@@ -46,12 +47,12 @@ internal fun RouteListRoute(
     LaunchedEffect(viewModel) {
         viewModel.sideEffect.filterIsInstance<RouteListSideEffect>().collect { effect ->
             when (effect) {
-                is RouteListSideEffect.NavigateToDetail -> onNavigateToDetail(effect.routeId)
+                is NavigateToDetail -> onNavigateToDetail(effect.routeId)
             }
         }
     }
 
-    RouteListScreen(
+    RouteListContent(
         state = state,
         onBack = onBack,
         onRouteSelected = viewModel::onRouteSelected
@@ -60,7 +61,7 @@ internal fun RouteListRoute(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun RouteListScreen(
+private fun RouteListContent(
     state: RouteListViewState,
     onBack: () -> Unit,
     onRouteSelected: (String) -> Unit
@@ -85,7 +86,7 @@ private fun RouteListScreen(
             when {
                 state.isLoading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                 state.error != null -> Text(
-                    text = stringResource(R.string.error_message, state.error.orEmpty()),
+                    text = stringResource(R.string.error_message, state.error),
                     modifier = Modifier.align(Alignment.Center)
                 )
                 else -> RouteList(

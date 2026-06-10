@@ -6,7 +6,7 @@ import com.miquido.stravapoc.core.architecture.mvi.MviDefaultConfig
 import com.miquido.stravapoc.core.architecture.mvi.MviViewModel
 import com.miquido.stravapoc.library.usecase.GetRouteByIdUseCase
 import com.miquido.stravapoc.library.usecase.GetWorkoutResultByIdUseCase
-import com.miquido.stravapoc.presentation.navigation.AppRoute
+import com.miquido.stravapoc.presentation.navigation.AppRoute.HistoryDetail
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
@@ -17,7 +17,7 @@ internal class HistoryDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle
 ) : MviViewModel<HistoryDetailViewState>(HistoryDetailViewState(), MviDefaultConfig()) {
 
-    private val route: AppRoute.HistoryDetail = savedStateHandle.toRoute()
+    private val route: HistoryDetail = savedStateHandle.toRoute()
 
     init {
         loadData()
@@ -30,7 +30,14 @@ internal class HistoryDetailViewModel @Inject constructor(
             transform { copy(isLoading = false, error = "Activity not found") }
             return@launch
         }
-        val r = runCatching { getRouteById(workout.routeId).getOrNull() }.getOrNull()
-        transform { copy(entity = workout, route = r, trackedPoints = workout.trackedPoints, isLoading = false) }
+        val route = runCatching { getRouteById(workout.routeId).getOrNull() }.getOrNull()
+        transform {
+            copy(
+                entity = workout,
+                route = route,
+                trackedPoints = workout.trackedPoints,
+                isLoading = false
+            )
+        }
     }
 }

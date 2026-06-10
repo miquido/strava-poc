@@ -5,6 +5,7 @@ import com.miquido.stravapoc.core.architecture.mvi.MviDefaultConfig
 import com.miquido.stravapoc.core.architecture.mvi.MviViewModel
 import com.miquido.stravapoc.library.usecase.DeleteWorkoutResultUseCase
 import com.miquido.stravapoc.library.usecase.GetWorkoutHistoryUseCase
+import com.miquido.stravapoc.presentation.history.HistorySideEffect.NavigateToDetail
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -12,7 +13,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 internal class HistoryViewModel @Inject constructor(
-    private val getHistoryUseCase: GetWorkoutHistoryUseCase,
+    getHistoryUseCase: GetWorkoutHistoryUseCase,
     private val deleteWorkoutResultUseCase: DeleteWorkoutResultUseCase
 ) : MviViewModel<HistoryViewState>(HistoryViewState(), MviDefaultConfig()) {
 
@@ -23,7 +24,7 @@ internal class HistoryViewModel @Inject constructor(
     }
 
     fun onItemSelected(id: Long) = launch {
-        emitSideEffect(HistorySideEffect.NavigateToDetail(id))
+        emitSideEffect(NavigateToDetail(id))
     }
 
     fun onDeleteItem(id: Long) = launch {

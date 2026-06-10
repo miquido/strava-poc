@@ -2,21 +2,30 @@ package com.miquido.stravapoc.wear
 
 import android.app.Application
 import com.miquido.stravapoc.wear.data.WorkoutResultSender
-import com.miquido.stravapoc.wear.di.WearAppModule
+import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
+@HiltAndroidApp
 class WearApplication : Application() {
 
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    @Inject lateinit var workoutResultSender: WorkoutResultSender
+
+    private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override fun onCreate() {
         super.onCreate()
-        WearAppModule.init(this)
-        scope.launch {
-            WorkoutResultSender(applicationContext).retrySendPending()
+        appScope.launch {
+            workoutResultSender.retrySendPending()
         }
+    }
+
+    override fun onTerminate() {
+        super.onTerminate()
+        appScope.cancel()
     }
 }

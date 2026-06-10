@@ -6,6 +6,8 @@ import com.miquido.stravapoc.core.architecture.mvi.MviDefaultConfig
 import com.miquido.stravapoc.core.architecture.mvi.MviViewModel
 import com.miquido.stravapoc.library.usecase.GetRouteByIdUseCase
 import com.miquido.stravapoc.presentation.navigation.AppRoute
+import com.miquido.stravapoc.presentation.routedetail.RouteDetailSideEffect.RouteSentError
+import com.miquido.stravapoc.presentation.routedetail.RouteDetailSideEffect.RouteSentSuccess
 import com.miquido.stravapoc.sync.RouteSender
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -36,11 +38,11 @@ internal class RouteDetailViewModel @Inject constructor(
         routeSender.send(r)
             .onSuccess {
                 transform { copy(isSending = false) }
-                emitSideEffect(RouteDetailSideEffect.RouteSentSuccess)
+                emitSideEffect(RouteSentSuccess)
             }
             .onFailure { e ->
                 transform { copy(isSending = false) }
-                emitSideEffect(RouteDetailSideEffect.RouteSentError(e.message ?: "Failed to send route"))
+                emitSideEffect(RouteSentError(e.message ?: "Failed to send route"))
             }
     }
 }

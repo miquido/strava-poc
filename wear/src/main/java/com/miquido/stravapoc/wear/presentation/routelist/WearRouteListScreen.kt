@@ -15,10 +15,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.items
 import androidx.wear.compose.material.Chip
@@ -32,12 +31,8 @@ import kotlinx.coroutines.flow.filterIsInstance
 
 @Composable
 fun WearRouteListScreen(
-    activityType: ActivityType,
     onNavigateToWorkout: (routeId: String, activityType: ActivityType) -> Unit,
-    viewModel: WearRouteListViewModel = viewModel(
-        factory = WearRouteListViewModel.factory(activityType, LocalContext.current),
-        key = activityType.name
-    )
+    viewModel: WearRouteListViewModel = hiltViewModel()
 ) {
     val state by viewModel.viewState.collectAsState()
 
@@ -59,14 +54,14 @@ fun WearRouteListScreen(
         item {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
-                    imageVector = activityType.wearIcon,
+                    imageVector = state.activityType.wearIcon,
                     contentDescription = null,
                     tint = Color.White,
                     modifier = Modifier.size(20.dp)
                 )
                 Spacer(Modifier.width(6.dp))
                 Text(
-                    text = activityType.wearLabel,
+                    text = state.activityType.wearLabel,
                     style = MaterialTheme.typography.title3
                 )
             }

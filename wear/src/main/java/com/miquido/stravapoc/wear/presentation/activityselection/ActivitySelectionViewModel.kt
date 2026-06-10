@@ -1,31 +1,27 @@
 package com.miquido.stravapoc.wear.presentation.activityselection
 
-import android.content.Context
+import android.net.Uri
 import android.util.Log
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
 import com.google.android.gms.wearable.DataClient
 import com.google.android.gms.wearable.DataMapItem
-import com.google.android.gms.wearable.Wearable
 import com.miquido.stravapoc.core.architecture.mvi.MviDefaultConfig
 import com.miquido.stravapoc.core.architecture.mvi.MviViewModel
 import com.miquido.stravapoc.library.data.model.ActivityType
 import com.miquido.stravapoc.library.data.model.Route
-import com.miquido.stravapoc.wear.data.local.WearDatabase
-import com.miquido.stravapoc.wear.data.repository.toWearEntity
-import kotlinx.coroutines.launch
+import com.miquido.stravapoc.library.usecase.GetMostRecentWearRouteUseCase
+import com.miquido.stravapoc.library.usecase.SaveWearRouteUseCase
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.serialization.json.Json
+import javax.inject.Inject
 
 private const val TAG = "ActivitySelectionVM"
 
-class ActivitySelectionViewModel(
+@HiltViewModel
+class ActivitySelectionViewModel @Inject constructor(
     private val dataClient: DataClient,
-    private val appContext: Context
+    private val getMostRecentWearRouteUseCase: GetMostRecentWearRouteUseCase,
+    private val saveWearRouteUseCase: SaveWearRouteUseCase,
 ) : MviViewModel<ActivitySelectionViewState>(ActivitySelectionViewState(), MviDefaultConfig()) {
-
-    private val dao = WearDatabase.getInstance(appContext).wearRouteDao()
 
     private val dataListener = DataClient.OnDataChangedListener { events ->
         events
@@ -36,7 +32,7 @@ class ActivitySelectionViewModel(
                     .dataMap
                     .getString("route_json") ?: return@forEach
                 Log.d(TAG, "route received via foreground DataClient listener")
-                saveToRoomAndApply(json, uri)
+                saveToDbAndApply(json, uri)
             }
     }
 
@@ -46,13 +42,11 @@ class ActivitySelectionViewModel(
         checkExistingDataLayerItems()
     }
 
-    private fun loadMostRecentRouteFromDb() {
-        viewModelScope.launch {
-            val entity = dao.getAll().firstOrNull()
-            if (entity != null) {
-                Log.d(TAG, "route loaded from Room: ${entity.name}")
-                transform { copy(receivedRouteId = entity.id, receivedRouteName = entity.name) }
-            }
+    private fun loadMostRecentRouteFromDb() = launch {
+        val route = getMostRecentWearRouteUseCase()
+        if (route != null) {
+            Log.d(TAG, "route loaded from Room: ${route.name}")
+            transform { copy(receivedRouteId = route.id, receivedRouteName = route.name) }
         }
     }
 
@@ -65,17 +59,17 @@ class ActivitySelectionViewModel(
                         .dataMap
                         .getString("route_json") ?: return@forEach
                     Log.d(TAG, "route found in existing DataLayer items")
-                    saveToRoomAndApply(json, uri)
+                    saveToDbAndApply(json, uri)
                 }
             items.release()
         }
     }
 
-    private fun saveToRoomAndApply(json: String, uri: android.net.Uri) {
+    private fun saveToDbAndApply(json: String, uri: Uri) {
         val route = runCatching { Json.decodeFromString<Route>(json) }
             .getOrNull() ?: return
-        viewModelScope.launch {
-            dao.insert(route.toWearEntity())
+        launch {
+            saveWearRouteUseCase(route)
             dataClient.deleteDataItems(uri)
         }
         transform { copy(receivedRouteId = route.id, receivedRouteName = route.name) }
@@ -88,16 +82,5 @@ class ActivitySelectionViewModel(
     override fun onCleared() {
         dataClient.removeListener(dataListener)
         super.onCleared()
-    }
-
-    companion object {
-        fun factory(context: Context): ViewModelProvider.Factory = viewModelFactory {
-            initializer {
-                ActivitySelectionViewModel(
-                    dataClient = Wearable.getDataClient(context),
-                    appContext = context.applicationContext
-                )
-            }
-        }
     }
 }

@@ -1,6 +1,5 @@
 package com.miquido.stravapoc.wear.presentation.activityselection
 
-import android.app.Application
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,10 +11,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.items
 import androidx.wear.compose.material.Chip
@@ -29,11 +27,7 @@ import kotlinx.coroutines.flow.filterIsInstance
 @Composable
 fun ActivitySelectionScreen(
     onNavigateToRouteList: (ActivityType) -> Unit,
-    viewModel: ActivitySelectionViewModel = viewModel(
-        factory = ActivitySelectionViewModel.factory(
-            LocalContext.current.applicationContext as Application
-        )
-    )
+    viewModel: ActivitySelectionViewModel = hiltViewModel()
 ) {
     val state by viewModel.viewState.collectAsState()
 

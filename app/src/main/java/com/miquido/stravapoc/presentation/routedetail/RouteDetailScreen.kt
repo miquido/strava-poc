@@ -39,10 +39,12 @@ import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.miquido.stravapoc.R
+import com.miquido.stravapoc.presentation.routedetail.RouteDetailSideEffect.RouteSentError
+import com.miquido.stravapoc.presentation.routedetail.RouteDetailSideEffect.RouteSentSuccess
 import kotlinx.coroutines.flow.filterIsInstance
 
 @Composable
-internal fun RouteDetailRoute(
+internal fun RouteDetailScreen(
     onBack: () -> Unit,
     viewModel: RouteDetailViewModel = hiltViewModel()
 ) {
@@ -54,15 +56,16 @@ internal fun RouteDetailRoute(
     LaunchedEffect(viewModel) {
         viewModel.sideEffect.filterIsInstance<RouteDetailSideEffect>().collect { effect ->
             when (effect) {
-                RouteDetailSideEffect.RouteSentSuccess ->
+                RouteSentSuccess ->
                     snackbarHostState.showSnackbar(msgSuccess)
-                is RouteDetailSideEffect.RouteSentError ->
+
+                is RouteSentError ->
                     snackbarHostState.showSnackbar(msgError.format(effect.message))
             }
         }
     }
 
-    RouteDetailScreen(
+    RouteDetailContent(
         state = state,
         onBack = onBack,
         onSendToWatch = viewModel::onSendToWatch,
@@ -72,7 +75,7 @@ internal fun RouteDetailRoute(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun RouteDetailScreen(
+private fun RouteDetailContent(
     state: RouteDetailViewState,
     onBack: () -> Unit,
     onSendToWatch: () -> Unit,
@@ -81,23 +84,33 @@ private fun RouteDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(state.route?.name ?: stringResource(R.string.route_detail_fallback_title)) },
+                title = {
+                    Text(
+                        state.route?.name ?: stringResource(R.string.route_detail_fallback_title)
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back))
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.cd_back)
+                        )
                     }
                 }
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+        Box(modifier = Modifier
+            .fillMaxSize()
+            .padding(padding)) {
             when {
                 state.isLoading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                 state.error != null -> Text(
-                    text = stringResource(R.string.error_message, state.error.orEmpty()),
+                    text = stringResource(R.string.error_message, state.error),
                     modifier = Modifier.align(Alignment.Center)
                 )
+
                 state.route != null -> {
                     val route = state.route
                     val points = route.points.map { LatLng(it.lat, it.lng) }
@@ -122,7 +135,11 @@ private fun RouteDetailScreen(
 
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text(
-                                text = stringResource(R.string.route_distance_info, route.distanceKm, route.points.size),
+                                text = stringResource(
+                                    R.string.route_distance_info,
+                                    route.distanceKm,
+                                    route.points.size
+                                ),
                                 style = MaterialTheme.typography.bodyLarge
                             )
                             Spacer(modifier = Modifier.height(12.dp))

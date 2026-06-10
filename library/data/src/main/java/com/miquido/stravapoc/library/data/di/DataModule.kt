@@ -1,8 +1,8 @@
 package com.miquido.stravapoc.library.data.di
 
 import android.content.Context
-import com.miquido.stravapoc.library.data.db.AppDatabase
-import com.miquido.stravapoc.library.data.db.dao.WorkoutResultDao
+import com.miquido.stravapoc.library.data.db.app.AppDatabase
+import com.miquido.stravapoc.library.data.db.app.dao.WorkoutResultDao
 import com.miquido.stravapoc.library.data.repository.RouteRepository
 import com.miquido.stravapoc.library.data.repository.RouteRepositoryImpl
 import com.miquido.stravapoc.library.data.repository.WorkoutResultRepository

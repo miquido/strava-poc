@@ -1,4 +1,4 @@
-package com.miquido.stravapoc.wear.data.local
+package com.miquido.stravapoc.library.data.db.wear
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

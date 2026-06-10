@@ -4,13 +4,13 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.miquido.stravapoc.presentation.historydetail.HistoryDetailRoute
+import com.miquido.stravapoc.presentation.historydetail.HistoryDetailScreen
 import com.miquido.stravapoc.presentation.home.HomeScreen
 import com.miquido.stravapoc.presentation.navigation.AppRoute.HistoryDetail
 import com.miquido.stravapoc.presentation.navigation.AppRoute.RouteDetail
 import com.miquido.stravapoc.presentation.navigation.AppRoute.RouteList
-import com.miquido.stravapoc.presentation.routedetail.RouteDetailRoute
-import com.miquido.stravapoc.presentation.routelist.RouteListRoute
+import com.miquido.stravapoc.presentation.routedetail.RouteDetailScreen
+import com.miquido.stravapoc.presentation.routelist.RouteListScreen
 
 @Composable
 internal fun AppNavGraph(navController: NavHostController) {
@@ -28,7 +28,7 @@ internal fun AppNavGraph(navController: NavHostController) {
         }
 
         composable<RouteList> {
-            RouteListRoute(
+            RouteListScreen(
                 onBack = { navController.popBackStack() },
                 onNavigateToDetail = { routeId ->
                     navController.navigate(RouteDetail(routeId))
@@ -37,13 +37,13 @@ internal fun AppNavGraph(navController: NavHostController) {
         }
 
         composable<RouteDetail> {
-            RouteDetailRoute(
+            RouteDetailScreen(
                 onBack = { navController.popBackStack() }
             )
         }
 
         composable<HistoryDetail> {
-            HistoryDetailRoute(
+            HistoryDetailScreen(
                 onBack = { navController.popBackStack() }
             )
         }

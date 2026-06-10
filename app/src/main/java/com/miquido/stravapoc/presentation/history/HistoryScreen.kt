@@ -47,8 +47,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.miquido.stravapoc.R
-import com.miquido.stravapoc.library.data.model.ActivityType
 import com.miquido.stravapoc.library.data.model.WorkoutResult
+import com.miquido.stravapoc.presentation.history.HistorySideEffect.NavigateToDetail
+import com.miquido.stravapoc.presentation.toDisplayNameRes
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -65,7 +66,7 @@ internal fun HistoryRoute(
     LaunchedEffect(viewModel) {
         viewModel.sideEffect.filterIsInstance<HistorySideEffect>().collect { effect ->
             when (effect) {
-                is HistorySideEffect.NavigateToDetail -> onNavigateToDetail(effect.id)
+                is NavigateToDetail -> onNavigateToDetail(effect.id)
             }
         }
     }
@@ -249,7 +250,7 @@ private fun HistoryItem(item: WorkoutResult, onClick: () -> Unit) {
                             style = MaterialTheme.typography.titleMedium
                         )
                         Text(
-                            text = "${formatDate(item.timestamp)} • ${item.activityType.toDisplayName()}",
+                            text = "${formatDate(item.timestamp)} • ${stringResource(item.activityType.toDisplayNameRes())}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -312,8 +313,3 @@ private fun formatPace(distanceKm: Double, durationSeconds: Long): String {
     return "%d:%02d".format(m, s)
 }
 
-private fun ActivityType.toDisplayName(): String = when (this) {
-    ActivityType.RUNNING -> "Running"
-    ActivityType.CYCLING -> "Cycling"
-    ActivityType.WALKING -> "Walking"
-}

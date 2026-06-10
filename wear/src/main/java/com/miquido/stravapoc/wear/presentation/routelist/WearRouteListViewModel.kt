@@ -1,23 +1,26 @@
 package com.miquido.stravapoc.wear.presentation.routelist
 
-import android.content.Context
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.lifecycle.SavedStateHandle
 import com.miquido.stravapoc.core.architecture.mvi.MviDefaultConfig
 import com.miquido.stravapoc.core.architecture.mvi.MviViewModel
 import com.miquido.stravapoc.library.data.model.ActivityType
-import com.miquido.stravapoc.library.usecase.GetRoutesUseCase
-import com.miquido.stravapoc.wear.data.WorkoutService
-import com.miquido.stravapoc.wear.di.WearAppModule
+import com.miquido.stravapoc.library.usecase.GetWearRoutesUseCase
+import com.miquido.stravapoc.wear.data.CUSTOM_ROUTE_ID
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
-class WearRouteListViewModel(
-    private val activityType: ActivityType,
-    private val getRoutesUseCase: GetRoutesUseCase
+@HiltViewModel
+class WearRouteListViewModel @Inject constructor(
+    savedStateHandle: SavedStateHandle,
+    private val getRoutesUseCase: GetWearRoutesUseCase,
 ) : MviViewModel<WearRouteListViewState>(
-    WearRouteListViewState(activityType = activityType),
+    WearRouteListViewState(activityType = ActivityType.valueOf(
+        checkNotNull(savedStateHandle.get<String>("activityType"))
+    )),
     MviDefaultConfig()
 ) {
+    private val activityType: ActivityType get() = viewState.value.activityType
+
     init {
         loadRoutes()
     }
@@ -32,7 +35,7 @@ class WearRouteListViewModel(
     fun onCustomActivitySelected() = launch {
         emitSideEffect(
             WearRouteListSideEffect.NavigateToWorkout(
-                routeId = WorkoutService.CUSTOM_ROUTE_ID,
+                routeId = CUSTOM_ROUTE_ID,
                 activityType = activityType
             )
         )
@@ -45,17 +48,5 @@ class WearRouteListViewModel(
                 activityType = routeActivityType
             )
         )
-    }
-
-    companion object {
-        fun factory(activityType: ActivityType, context: Context): ViewModelProvider.Factory =
-            viewModelFactory {
-                initializer {
-                    WearRouteListViewModel(
-                        activityType = activityType,
-                        getRoutesUseCase = WearAppModule.getRoutesUseCase
-                    )
-                }
-            }
     }
 }
